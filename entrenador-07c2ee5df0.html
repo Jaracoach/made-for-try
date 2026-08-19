@@ -142,10 +142,11 @@
           <div><label>Descanso ejercicios (s)</label><input id="mRestE" type="number" min="0" value="20"></div>
         </div>
         <div class="row" style="margin-top:10px">
-          <div><label>Modo por defecto</label><select id="mMode"><option value="REPS">Repeticiones</option><option value="TIME">Tiempo</option><option value="MIXED">Mixto (por ejercicio)</option></select></div>
-          <div><label>Reps objetivo</label><input id="mReps" type="number" min="1" value="12"></div>
-          <div><label>Tiempo objetivo (s)</label><input id="mTime" type="number" min="1" value="30"></div>
+          <div><label>Modo (aplica a todos)</label><select id="mMode"><option value="REPS">Repeticiones</option><option value="TIME">Tiempo</option><option value="MIXED">Mixto (por ejercicio)</option></select></div>
+          <div id="mRepsWrap"><label>Reps objetivo</label><input id="mReps" type="number" min="1" value="12"></div>
+          <div id="mTimeWrap"><label>Tiempo objetivo (s)</label><input id="mTime" type="number" min="1" value="30"></div>
         </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">El modo y el objetivo se aplican a <b>todos</b> los ejercicios de la sesión. Abajo puedes ajustar cada ejercicio por separado.</div>
         <div class="row" style="margin-top:10px">
           <div><label>Organización muscular (registro)</label><select id="mOrg"><option value="NO_RELATION">Sin relación</option><option value="AGONIST_AGONIST">Agonista–agonista</option><option value="AGONIST_ANTAGONIST">Agonista–antagonista</option></select></div>
         </div>
@@ -250,9 +251,28 @@ var LIB=__DATA__.exercises;
    selList.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){state.selected.splice(+b.dataset.rm,1);renderSel();renderGrid();};});
    selList.querySelectorAll('[data-up]').forEach(function(b){b.onclick=function(){var i=+b.dataset.up;if(i>0){var t=state.selected[i];state.selected[i]=state.selected[i-1];state.selected[i-1]=t;renderSel();}};});
    selList.querySelectorAll('[data-dn]').forEach(function(b){b.onclick=function(){var i=+b.dataset.dn;if(i<state.selected.length-1){var t=state.selected[i];state.selected[i]=state.selected[i+1];state.selected[i+1]=t;renderSel();}};});
-   selList.querySelectorAll('[data-mode]').forEach(function(sel){sel.onchange=function(){var i=+sel.dataset.mode;state.selected[i].mode=sel.value;renderSel();};});
+   selList.querySelectorAll('[data-mode]').forEach(function(sel){sel.onchange=function(){var i=+sel.dataset.mode;var mm=curMethod();state.selected[i].mode=sel.value;state.selected[i].target=(sel.value==='TIME')?mm.time:mm.reps;renderSel();};});
    selList.querySelectorAll('[data-tgt]').forEach(function(inp){inp.onchange=function(){var i=+inp.dataset.tgt;state.selected[i].target=+inp.value||1;};});
  }
+
+ // --- Control maestro: modo/objetivo de arriba manda sobre TODOS los ejercicios ---
+ function syncModeFields(){
+   var mode=document.getElementById('mMode').value;
+   document.getElementById('mRepsWrap').style.display=(mode==='TIME')?'none':'';
+   document.getElementById('mTimeWrap').style.display=(mode==='REPS')?'none':'';
+ }
+ function applyMaster(){
+   var m=curMethod();
+   state.selected.forEach(function(s){
+     var mode = m.mode==='MIXED' ? ((byId[s.exercise_id]||{}).default_mode||s.mode) : m.mode;
+     s.mode=mode; s.target=(mode==='TIME')?m.time:m.reps;
+   });
+   renderSel();
+ }
+ document.getElementById('mMode').onchange=function(){syncModeFields();applyMaster();};
+ document.getElementById('mReps').oninput=function(){applyMaster();};
+ document.getElementById('mTime').oninput=function(){applyMaster();};
+ syncModeFields();
 
  function setMsg(el,txt,ok){el.textContent=txt;el.className='msg '+(ok?'ok':'err');}
  document.getElementById('addSession').onclick=function(){
