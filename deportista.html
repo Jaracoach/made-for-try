@@ -36,7 +36,7 @@
     b.innerHTML='<div class="eyebrow">Made For Try</div><h1>No se pudo abrir el entrenamiento</h1>'+
       '<p>Pídele a tu entrenador que te reenvíe el enlace completo. Si lo copiaste, revisa que esté completo (a veces se corta).</p>'+
       (msg?'<div class="err">'+String(msg).replace(/</g,'&lt;')+'</div>':'')+
-      (showHome?'<a class="btn" href="index.html">Ir al inicio</a>':'');
+      '';
   }
   function b64urlDecode(s){
     s=s.replace(/-/g,'+').replace(/_/g,'/');
