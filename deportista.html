@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tu entrenamiento · Made For Try</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:radial-gradient(1200px 700px at 78% -12%,#26143d 0,rgba(38,20,61,0) 58%),#0C0A11;color:#ECE9F2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
+  .box{max-width:520px}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#AE52F4;margin-bottom:14px}
+  h1{font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:clamp(28px,7vw,44px);text-transform:uppercase;line-height:.98}
+  p{color:#C6B7EA;margin-top:14px;font-size:15px;line-height:1.55}
+  .spin{width:36px;height:36px;border:3px solid #2A2338;border-top-color:#AE52F4;border-radius:50%;margin:22px auto 0;animation:r 1s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  .err{color:#F5B544;font-family:'Space Mono';font-size:13px;margin-top:16px;word-break:break-word}
+  a.btn{display:inline-block;margin-top:18px;font-family:'Space Mono';font-size:13px;text-transform:uppercase;font-weight:700;color:#0c0a11;background:#47D98D;border-radius:12px;padding:12px 20px;text-decoration:none}
+</style>
+</head>
+<body>
+<noscript><div class="box"><h1>Activa JavaScript</h1><p>Para ver tu entrenamiento con cronómetro, ábrelo en tu navegador (Safari o Chrome) con JavaScript activado.</p></div></noscript>
+<div class="box" id="boot">
+  <div class="eyebrow">Made For Try</div>
+  <h1>Cargando tu entrenamiento…</h1>
+  <div class="spin"></div>
+  <p class="err" id="err" style="display:none"></p>
+</div>
+<script src="athlete_template.js"></script>
+<script>
+(function(){
+  function showErr(msg, showHome){
+    var b=document.getElementById('boot');
+    b.innerHTML='<div class="eyebrow">Made For Try</div><h1>No se pudo abrir el entrenamiento</h1>'+
+      '<p>Pídele a tu entrenador que te reenvíe el enlace completo. Si lo copiaste, revisa que esté completo (a veces se corta).</p>'+
+      (msg?'<div class="err">'+String(msg).replace(/</g,'&lt;')+'</div>':'')+
+      (showHome?'<a class="btn" href="index.html">Ir al inicio</a>':'');
+  }
+  function b64urlDecode(s){
+    s=s.replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length%4)s+='=';
+    return decodeURIComponent(escape(atob(s)));
+  }
+  try{
+    var raw=(location.hash||'').replace(/^#/, '');
+    if(!raw){ showErr('', true); return; }
+    // admite  #p=xxxx  o  #xxxx
+    var enc = raw.indexOf('p=')===0 ? raw.slice(2) : (raw.indexOf('=')>=0 ? (new URLSearchParams(raw)).get('p') : raw);
+    if(!enc){ showErr('', true); return; }
+    var plan;
+    try{ plan=JSON.parse(b64urlDecode(enc)); }
+    catch(e){ showErr('Enlace ilegible.', true); return; }
+    if(!plan || !plan.sessions || !plan.sessions.length){ showErr('El plan viene vacío.', true); return; }
+    fetch('library.json').then(function(r){return r.json();}).then(function(lib){
+      var byId={}; lib.exercises.forEach(function(x){byId[x.exercise_id]=x;});
+      var libIndex={};
+      plan.sessions.forEach(function(s){ s.exercises.forEach(function(e){
+        var x=byId[e.exercise_id]||{};
+        libIndex[e.exercise_id]={name:x.name||e.name,source_title:x.source_title||'',grupo:x.grupo||e.group||'',media:x.media||'',cues:x.cues||[]};
+      });});
+      var html=buildAthleteHTML(plan, libIndex);
+      document.open(); document.write(html); document.close();
+    }).catch(function(e){ showErr('No se pudo cargar la biblioteca de ejercicios ('+e+').', true); });
+  }catch(err){ showErr(err, true); }
+})();
+</script>
+</body>
+</html>

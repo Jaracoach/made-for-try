@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Made For Try · Fuerza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--ink:#0C0A11;--ink-2:#141019;--line:#2A2338;--bone:#ECE9F2;--muted:#8B8399;--violet:#AE52F4;--coral:#FF6F5E;--cyan:#38C6E4;--mint:#47D98D}
+  body{font-family:'Inter',system-ui,sans-serif;background:radial-gradient(1200px 700px at 80% -12%,#26143d 0,rgba(38,20,61,0) 58%),radial-gradient(900px 600px at 5% 8%,#1a1030 0,rgba(26,16,48,0) 55%),var(--ink);color:var(--bone);min-height:100vh;padding:clamp(20px,5vw,56px);line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--violet);margin-bottom:14px}
+  h1{font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:clamp(40px,9vw,84px);text-transform:uppercase;line-height:.92}
+  .lede{color:var(--muted);max-width:60ch;margin-top:14px;font-size:15px}
+  .doors{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
+  @media(max-width:680px){.doors{grid-template-columns:1fr}}
+  .door{position:relative;display:block;text-decoration:none;color:var(--bone);background:var(--ink-2);border:1px solid var(--line);border-radius:20px;padding:26px;overflow:hidden;transition:border-color .2s,transform .2s}
+  .door:hover{transform:translateY(-3px)}
+  .door.ent:hover{border-color:var(--violet)} .door.dep:hover{border-color:var(--mint)}
+  .door .tag{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .door h2{font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:clamp(26px,4vw,36px);text-transform:uppercase;margin:8px 0 6px;line-height:1}
+  .door p{color:var(--muted);font-size:13.5px;min-height:56px}
+  .door .go{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-family:'Space Mono';font-size:12px;text-transform:uppercase;font-weight:700;color:#0c0a11;border-radius:11px;padding:11px 16px}
+  .door.ent .go{background:var(--violet)} .door.dep .go{background:var(--mint)}
+  .door .num{position:absolute;top:14px;right:18px;font-family:'Saira Condensed';font-weight:800;font-size:60px;color:rgba(255,255,255,.05);line-height:1}
+  .strip{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .strip a{font-family:'Space Mono';font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px}
+  .strip a:hover{color:var(--bone);border-color:var(--cyan)}
+  .note{margin-top:30px;color:var(--muted);font-size:13px;background:rgba(174,82,244,.06);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-width:70ch}
+  .foot{margin-top:34px;color:var(--muted);font-family:'Space Mono';font-size:11px;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Made For Try · Entrenamiento de fuerza</div>
+  <h1>Fuerza para<br>triatletas</h1>
+  <p class="lede">Biblioteca de 111 ejercicios de autocarga y elásticos, con fichas técnicas, para armar y enviar entrenamientos que se reproducen con cronómetro desde el celular.</p>
+
+  <div class="doors">
+    <a class="door ent" href="entrenador.html">
+      <span class="num">01</span>
+      <div class="tag">Administrador</div>
+      <h2>Entrenador</h2>
+      <p>Filtra la biblioteca, arma la sesión, define el método y genera el enlace del alumno o el archivo sin conexión.</p>
+      <span class="go">Entrar al panel →</span>
+    </a>
+    <a class="door dep" href="deportista.html">
+      <span class="num">02</span>
+      <div class="tag">Usuario</div>
+      <h2>Deportista</h2>
+      <p>Abre el enlace que te pasó tu entrenador y sigue la sesión guiada: GIF, series, cronómetro y descansos automáticos.</p>
+      <span class="go">Abrir mi entrenamiento →</span>
+    </a>
+  </div>
+
+  <div class="strip">
+    <a href="ontologia.html">Ontología de ejercicios (módulo 01)</a>
+  </div>
+
+  <div class="note"><b>¿Cómo funciona?</b> El entrenador arma la sesión en el panel y pulsa <b>“Generar enlace del alumno”</b>. Ese enlace se envía por WhatsApp; el alumno lo abre en su celular y el cronómetro arranca de una, sin instalar nada.</div>
+
+  <div class="foot">Made For Try · MVP de planificación manual y ejecución guiada</div>
+</div>
+</body>
+</html>
