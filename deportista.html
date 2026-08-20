@@ -52,7 +52,7 @@
         session_id:'S'+(idx+1), name:se.n||('Sesión '+(idx+1)), date:se.d||'',
         progression:(se.p==='V'?'VERTICAL':'HORIZONTAL'),
         series:se.s, rest_series:se.rs, rest_exercises:se.re, muscle_groups:[],
-        exercises:(se.x||[]).map(function(e){ return { exercise_id:e.i, mode:(e.m==='T'?'TIME':'REPS'), target:e.t }; })
+        exercises:(se.x||[]).map(function(e){ return { exercise_id:e.i, mode:(e.m==='T'?'TIME':'REPS'), target:e.t, note:e.nt||'', flip:!!e.f }; })
       };})
     };
   }

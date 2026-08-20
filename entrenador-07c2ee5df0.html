@@ -96,6 +96,11 @@
   .topnav{display:flex;gap:14px;margin-top:10px;font-family:'Space Mono';font-size:11px;text-transform:uppercase;letter-spacing:.06em}
   .topnav a{color:#8B8399;text-decoration:none;border-bottom:1px solid transparent}
   .topnav a:hover{color:#ECE9F2;border-bottom-color:#AE52F4}
+  .mirtog{display:inline-flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
+  .mirtog input{width:auto;margin:0}
+  .mir{font-family:'Space Mono',monospace;font-size:9px;color:var(--cyan);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .sel-note{width:100%;margin-top:8px;background:var(--ink-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;font-family:'Inter';font-size:12px;color:var(--bone)}
+  .sel-note::placeholder{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -218,12 +223,12 @@ var LIB=__DATA__.exercises;
    if(!list.length){grid.innerHTML='<div class="empty">Sin resultados con este filtro.</div>';return;}
    grid.innerHTML=list.map(function(x){
      var col=GMETA[x.grupo_slug][1];
-     var sel=state.selected.some(function(s){return s.exercise_id===x.exercise_id;});
+     var cnt=state.selected.filter(function(s){return s.exercise_id===x.exercise_id;}).length;
      return '<div class="card"><div class="th"><span class="cf" style="background:'+col+'">'+esc(GMETA[x.grupo_slug][0])+'</span><span class="df">Dif '+x.difficulty+'</span>'+
        (x.engine_eligible?'':'<span class="noe">sin ficha apta</span>')+
        '<img loading="lazy" src="'+x.media+'" alt=""></div><div class="cb"><div class="cn">'+esc(x.name)+'</div>'+
        '<div class="cm">'+esc(x.muscles.join(', '))+' · '+esc(x.pattern_es)+'</div>'+
-       '<div class="ca"><button data-f="'+x.exercise_id+'">Ficha</button><button class="add" data-a="'+x.exercise_id+'"'+(sel?' disabled':'')+'>'+(sel?'✓ Añadido':'+ Añadir')+'</button></div></div></div>';
+       '<div class="ca"><button data-f="'+x.exercise_id+'">Ficha</button><button class="add" data-a="'+x.exercise_id+'">'+(cnt?('+ Añadir · '+cnt):'+ Añadir')+'</button></div></div></div>';
    }).join('');
    grid.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){addExercise(b.dataset.a);};});
    grid.querySelectorAll('[data-f]').forEach(function(b){b.onclick=function(){openFicha(b.dataset.f);};});
@@ -231,11 +236,10 @@ var LIB=__DATA__.exercises;
 
  function curMethod(){return {progression:document.querySelector('#progSw button.on').dataset.v,series:+document.getElementById('mSeries').value||1,rest_series:+document.getElementById('mRestS').value||0,rest_exercises:+document.getElementById('mRestE').value||0,mode:document.getElementById('mMode').value,reps:+document.getElementById('mReps').value||12,time:+document.getElementById('mTime').value||30,org:document.getElementById('mOrg').value};}
  function addExercise(id){
-   if(state.selected.some(function(s){return s.exercise_id===id;}))return;
    var x=byId[id],m=curMethod();
    var mode = m.mode==='MIXED' ? x.default_mode : m.mode;
    var target = mode==='TIME'? m.time : m.reps;
-   state.selected.push({exercise_id:id,name:x.name,group:x.grupo,difficulty:x.difficulty,mode:mode,target:target});
+   state.selected.push({exercise_id:id,name:x.name,group:x.grupo,difficulty:x.difficulty,mode:mode,target:target,note:'',flip:false});
    renderSel();renderGrid();
  }
  var selList=document.getElementById('selList');
@@ -243,16 +247,20 @@ var LIB=__DATA__.exercises;
    document.getElementById('selN').textContent=state.selected.length;
    if(!state.selected.length){selList.innerHTML='<div style="color:var(--muted);font-size:12px">Aún no has añadido ejercicios. Filtra a la izquierda y pulsa “+ Añadir”.</div>';return;}
    selList.innerHTML=state.selected.map(function(s,i){
-     return '<div class="sel"><div class="sel-top"><span class="sel-idx">'+(i+1)+'</span><span class="sel-name">'+esc(s.name)+'</span>'+
+     return '<div class="sel"><div class="sel-top"><span class="sel-idx">'+(i+1)+'</span><span class="sel-name">'+esc(s.name)+(s.flip?' <span class="mir">⇋ espejo</span>':'')+'</span>'+
        '<div class="sel-mv"><button data-up="'+i+'">▲</button><button data-dn="'+i+'">▼</button></div><button class="sel-x" data-rm="'+i+'">✕</button></div>'+
        '<div class="sel-dose"><select data-mode="'+i+'"><option value="REPS"'+(s.mode==='REPS'?' selected':'')+'>Reps</option><option value="TIME"'+(s.mode==='TIME'?' selected':'')+'>Tiempo</option></select>'+
-       '<input type="number" min="1" data-tgt="'+i+'" value="'+s.target+'"><span class="u">'+(s.mode==='TIME'?'segundos':'reps')+'</span></div></div>';
+       '<input type="number" min="1" data-tgt="'+i+'" value="'+s.target+'"><span class="u">'+(s.mode==='TIME'?'segundos':'reps')+'</span>'+
+       '<label class="mirtog" title="Refleja el GIF para mostrar el otro lado"><input type="checkbox" data-flip="'+i+'"'+(s.flip?' checked':'')+'>espejo</label></div>'+
+       '<input class="sel-note" data-note="'+i+'" placeholder="Nota (ej. lado derecho)" value="'+esc(s.note||'')+'"></div>';
    }).join('');
    selList.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){state.selected.splice(+b.dataset.rm,1);renderSel();renderGrid();};});
    selList.querySelectorAll('[data-up]').forEach(function(b){b.onclick=function(){var i=+b.dataset.up;if(i>0){var t=state.selected[i];state.selected[i]=state.selected[i-1];state.selected[i-1]=t;renderSel();}};});
    selList.querySelectorAll('[data-dn]').forEach(function(b){b.onclick=function(){var i=+b.dataset.dn;if(i<state.selected.length-1){var t=state.selected[i];state.selected[i]=state.selected[i+1];state.selected[i+1]=t;renderSel();}};});
    selList.querySelectorAll('[data-mode]').forEach(function(sel){sel.onchange=function(){var i=+sel.dataset.mode;var mm=curMethod();state.selected[i].mode=sel.value;state.selected[i].target=(sel.value==='TIME')?mm.time:mm.reps;renderSel();};});
    selList.querySelectorAll('[data-tgt]').forEach(function(inp){inp.onchange=function(){var i=+inp.dataset.tgt;state.selected[i].target=+inp.value||1;};});
+   selList.querySelectorAll('[data-flip]').forEach(function(cb){cb.onchange=function(){state.selected[+cb.dataset.flip].flip=cb.checked;renderSel();};});
+   selList.querySelectorAll('[data-note]').forEach(function(inp){inp.oninput=function(){state.selected[+inp.dataset.note].note=inp.value;};});
  }
 
  // --- Control maestro: modo/objetivo de arriba manda sobre TODOS los ejercicios ---
@@ -284,7 +292,7 @@ var LIB=__DATA__.exercises;
    var sess={session_id:'SES-'+(state.plan.sessions.length+1)+'-'+Date.now().toString().slice(-4),name:name,date:document.getElementById('sDate').value||'',
      muscle_groups:groups,difficulty_max:state.diffMax,progression:m.progression,organization:m.org,
      series:m.series,rest_series:m.rest_series,rest_exercises:m.rest_exercises,
-     exercises:state.selected.map(function(s){return {exercise_id:s.exercise_id,name:s.name,group:s.group,difficulty:s.difficulty,mode:s.mode,target:s.target};})};
+     exercises:state.selected.map(function(s){return {exercise_id:s.exercise_id,name:s.name,group:s.group,difficulty:s.difficulty,mode:s.mode,target:s.target,note:s.note||'',flip:!!s.flip};})};
    state.plan.sessions.push(sess);
    state.selected=[];renderSel();renderGrid();renderPlan();
    setMsg(document.getElementById('sMsg'),'Sesión añadida al plan ✓',true);
@@ -306,7 +314,7 @@ var LIB=__DATA__.exercises;
    return {plan:p,libIndex:libIndex};
  }
  function b64url(str){return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
- function compactPlan(plan){return {v:1,t:plan.title,a:plan.athlete_name||'',s:(plan.sessions||[]).map(function(se){return {n:se.name,d:se.date||'',p:(se.progression==='VERTICAL'?'V':'H'),s:se.series,rs:se.rest_series,re:se.rest_exercises,x:(se.exercises||[]).map(function(e){return {i:e.exercise_id,m:(e.mode==='TIME'?'T':'R'),t:e.target};})};})};}
+ function compactPlan(plan){return {v:1,t:plan.title,a:plan.athlete_name||'',s:(plan.sessions||[]).map(function(se){return {n:se.name,d:se.date||'',p:(se.progression==='VERTICAL'?'V':'H'),s:se.series,rs:se.rest_series,re:se.rest_exercises,x:(se.exercises||[]).map(function(e){var o={i:e.exercise_id,m:(e.mode==='TIME'?'T':'R'),t:e.target};if(e.note)o.nt=e.note;if(e.flip)o.f=1;return o;})};})};}
  function encodePlan(plan){return b64url(JSON.stringify(compactPlan(plan)));}
  function athleteURL(plan){return new URL('deportista.html',location.href).href+'#p='+encodePlan(plan);}
  function toDataURI(url){return fetch(url).then(function(r){return r.blob();}).then(function(bl){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=rej;fr.readAsDataURL(bl);});});}

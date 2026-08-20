@@ -26,11 +26,14 @@ function buildAthleteHTML(plan, libIndex){
       '<span class="start-hint needjs">¿El botón no reacciona? Ábrelo en tu navegador (⋯ → «Abrir en el navegador»).</span>'+
       '<div class="done-badge" id="done-'+idx+'" hidden></div></div>';
     var items=s.exercises.map(function(e,i){
-      var m=MEDIA[e.exercise_id]||{}; var img=m.media?('<img loading="lazy" src="'+m.media+'" alt="'+esc(e.name)+'">'):'<div class="noimg">sin imagen</div>';
+      var m=MEDIA[e.exercise_id]||{}; var fl=e.flip?' style="transform:scaleX(-1)"':'';
+      var img=m.media?('<img loading="lazy"'+fl+' src="'+m.media+'" alt="'+esc(e.name)+'">'):'<div class="noimg">sin imagen</div>';
       var cues=(m.cues&&m.cues.length)?'<ul class="cues">'+m.cues.map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+'</ul>':'';
+      var note=e.note?('<div class="ex-note">'+esc(e.note)+'</div>'):'';
+      var mtag=e.flip?' <span class="mirtag">⇋ espejo</span>':'';
       return '<article class="ex"><div class="ex-n">'+(i+1)+'</div><div class="ex-media">'+img+'</div>'+
-        '<div class="ex-body"><div class="ex-name">'+esc(e.name)+'</div>'+
-        '<div class="ex-dose"><b>'+s.series+' × '+esc(dose(e))+'</b>'+(m.grupo?(' · '+esc(m.grupo)):'')+'</div>'+cues+'</div></article>';
+        '<div class="ex-body"><div class="ex-name">'+esc(e.name)+mtag+'</div>'+
+        '<div class="ex-dose"><b>'+s.series+' × '+esc(dose(e))+'</b>'+(m.grupo?(' · '+esc(m.grupo)):'')+'</div>'+note+cues+'</div></article>';
     }).join('');
     return '<section class="s-card">'+head+'<div class="ex-list">'+items+'</div></section>';
   }
@@ -95,6 +98,9 @@ var CSS = [
 ".ex-name{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;line-height:1.05}",
 ".ex-dose{font-family:'Space Mono',monospace;font-size:12px;color:#8B8399;margin-top:3px}",
 ".ex-dose b{color:#38C6E4}",
+".ex-note{font-family:'Space Mono',monospace;font-size:12px;color:#F5B544;margin-top:6px;background:rgba(245,181,68,.08);border:1px solid #2A2338;border-radius:8px;padding:6px 9px}",
+".mirtag{font-family:'Space Mono',monospace;font-size:10px;color:#38C6E4;border:1px solid #2A2338;border-radius:6px;padding:1px 6px;white-space:nowrap}",
+".p-note{font-family:'Space Mono',monospace;font-size:13px;color:#F5B544;background:rgba(245,181,68,.1);border-radius:10px;padding:8px 14px;max-width:44ch}",
 ".cues{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:4px}",
 ".cues li{font-size:12.5px;color:#C6B7EA;display:flex;gap:7px}",
 ".cues li::before{content:'›';color:#47D98D;font-weight:700}",
@@ -162,17 +168,19 @@ var PLAYER_JS = [
 "function next(){clearTimer();cur.i++;render();}",
 "function render(){setBar();var st=cur.steps[cur.i];if(!st){return finish();}",
 "  if(st.kind==='work'){renderWork(st);}else{renderRest(st);}}",
-"function mediaBox(e){var m=MEDIA[e.exercise_id]||{};return m.media?('<div class=\"p-media\"><img src=\"'+m.media+'\" alt=\"\"></div>'):'';}",
+"function mediaBox(e){var m=MEDIA[e.exercise_id]||{};var f=e.flip?' style=\"transform:scaleX(-1)\"':'';return m.media?('<div class=\"p-media\"><img'+f+' src=\"'+m.media+'\" alt=\"\"></div>'):'';}",
 "function renderWork(st){var e=st.e,m=MEDIA[e.exercise_id]||{};",
 "  var cues=(m.cues&&m.cues.length)?('<div class=\"p-cues\">'+m.cues.slice(0,3).map(function(c){return '<div>› '+esc(c)+'</div>';}).join('')+'</div>'):'';",
+"  var note=e.note?('<div class=\"p-note\">'+esc(e.note)+'</div>'):'';",
+"  var nm=esc(e.name)+(e.flip?' <span class=\"mirtag\">⇋ espejo</span>':'');",
 "  var serie='<div class=\"p-serie\">Serie '+st.serie+' / '+st.series+'</div>';",
 "  if(e.mode==='TIME'){",
-"    stage.innerHTML='<div class=\"p-phase\">Trabajo</div>'+mediaBox(e)+'<div class=\"p-name\">'+esc(e.name)+'</div>'+serie+'<div class=\"p-timer\" id=\"tmr\">'+fmt(e.target)+'</div>'+cues;",
+"    stage.innerHTML='<div class=\"p-phase\">Trabajo</div>'+mediaBox(e)+'<div class=\"p-name\">'+nm+'</div>'+serie+note+'<div class=\"p-timer\" id=\"tmr\">'+fmt(e.target)+'</div>'+cues;",
 "    controls.innerHTML='<button class=\"p-btn\" id=\"pause\">Pausa</button><button class=\"p-btn\" id=\"skip\">Saltar</button>';",
 "    document.getElementById('skip').onclick=next;document.getElementById('pause').onclick=togglePause;",
 "    startCountdown(e.target,function(){beep(880,0.18,'square');vib(200);next();});",
 "  } else {",
-"    stage.innerHTML='<div class=\"p-phase\">Trabajo</div>'+mediaBox(e)+'<div class=\"p-name\">'+esc(e.name)+'</div>'+serie+'<div class=\"p-target\">'+e.target+' reps</div>'+cues;",
+"    stage.innerHTML='<div class=\"p-phase\">Trabajo</div>'+mediaBox(e)+'<div class=\"p-name\">'+nm+'</div>'+serie+note+'<div class=\"p-target\">'+e.target+' reps</div>'+cues;",
 "    controls.innerHTML='<button class=\"p-btn primary big\" id=\"doneSet\">Serie completada ✓</button>';",
 "    document.getElementById('doneSet').onclick=function(){beep(700,0.1);vib(120);next();};",
 "  }}",
