@@ -43,6 +43,19 @@
     while(s.length%4)s+='=';
     return decodeURIComponent(escape(atob(s)));
   }
+  function expandPlan(p){
+    if(!p) return p;
+    if(p.sessions) return p; // formato completo (compatibilidad con enlaces anteriores)
+    if(!p.s) return p;
+    return { plan_id:'PLAN', title:p.t||'Entrenamiento de fuerza', athlete_name:p.a||'',
+      sessions:p.s.map(function(se,idx){ return {
+        session_id:'S'+(idx+1), name:se.n||('Sesión '+(idx+1)), date:se.d||'',
+        progression:(se.p==='V'?'VERTICAL':'HORIZONTAL'),
+        series:se.s, rest_series:se.rs, rest_exercises:se.re, muscle_groups:[],
+        exercises:(se.x||[]).map(function(e){ return { exercise_id:e.i, mode:(e.m==='T'?'TIME':'REPS'), target:e.t }; })
+      };})
+    };
+  }
   try{
     var raw=(location.hash||'').replace(/^#/, '');
     if(!raw){ showErr('', true); return; }
@@ -50,16 +63,21 @@
     var enc = raw.indexOf('p=')===0 ? raw.slice(2) : (raw.indexOf('=')>=0 ? (new URLSearchParams(raw)).get('p') : raw);
     if(!enc){ showErr('', true); return; }
     var plan;
-    try{ plan=JSON.parse(b64urlDecode(enc)); }
+    try{ plan=expandPlan(JSON.parse(b64urlDecode(enc))); }
     catch(e){ showErr('Enlace ilegible.', true); return; }
     if(!plan || !plan.sessions || !plan.sessions.length){ showErr('El plan viene vacío.', true); return; }
     fetch('library.json').then(function(r){return r.json();}).then(function(lib){
       var byId={}; lib.exercises.forEach(function(x){byId[x.exercise_id]=x;});
       var libIndex={};
-      plan.sessions.forEach(function(s){ s.exercises.forEach(function(e){
-        var x=byId[e.exercise_id]||{};
-        libIndex[e.exercise_id]={name:x.name||e.name,source_title:x.source_title||'',grupo:x.grupo||e.group||'',media:x.media||'',cues:x.cues||[]};
-      });});
+      plan.sessions.forEach(function(s){ var groups=[];
+        s.exercises.forEach(function(e){
+          var x=byId[e.exercise_id]||{};
+          if(!e.name) e.name = x.name || e.exercise_id;
+          if(x.grupo && groups.indexOf(x.grupo)<0) groups.push(x.grupo);
+          libIndex[e.exercise_id]={name:x.name||e.name,source_title:x.source_title||'',grupo:x.grupo||e.group||'',media:x.media||'',cues:x.cues||[]};
+        });
+        if(!s.muscle_groups || !s.muscle_groups.length) s.muscle_groups=groups;
+      });
       var html=buildAthleteHTML(plan, libIndex);
       document.open(); document.write(html); document.close();
     }).catch(function(e){ showErr('No se pudo cargar la biblioteca de ejercicios ('+e+').', true); });

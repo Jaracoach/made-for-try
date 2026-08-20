@@ -305,7 +305,9 @@ var LIB=__DATA__.exercises;
    var libIndex={};p.sessions.forEach(function(s){s.exercises.forEach(function(e){var x=byId[e.exercise_id];libIndex[e.exercise_id]={name:x.name,source_title:x.source_title,grupo:x.grupo,media:x.media,cues:x.cues};});});
    return {plan:p,libIndex:libIndex};
  }
- function encodePlan(plan){return btoa(unescape(encodeURIComponent(JSON.stringify(plan)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+ function b64url(str){return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+ function compactPlan(plan){return {v:1,t:plan.title,a:plan.athlete_name||'',s:(plan.sessions||[]).map(function(se){return {n:se.name,d:se.date||'',p:(se.progression==='VERTICAL'?'V':'H'),s:se.series,rs:se.rest_series,re:se.rest_exercises,x:(se.exercises||[]).map(function(e){return {i:e.exercise_id,m:(e.mode==='TIME'?'T':'R'),t:e.target};})};})};}
+ function encodePlan(plan){return b64url(JSON.stringify(compactPlan(plan)));}
  function athleteURL(plan){return new URL('deportista.html',location.href).href+'#p='+encodePlan(plan);}
  function toDataURI(url){return fetch(url).then(function(r){return r.blob();}).then(function(bl){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=rej;fr.readAsDataURL(bl);});});}
  function embedMedia(libIndex){var ids=Object.keys(libIndex);return Promise.all(ids.map(function(id){var u=libIndex[id].media;if(!u||u.indexOf('data:')===0)return Promise.resolve();return toDataURI(u).then(function(d){var c={};for(var k in libIndex[id])c[k]=libIndex[id][k];c.media=d;libIndex[id]=c;});})).then(function(){return libIndex;});}
