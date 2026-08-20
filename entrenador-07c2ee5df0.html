@@ -324,8 +324,14 @@ var LIB=__DATA__.exercises;
  function embedMedia(libIndex){var ids=Object.keys(libIndex);return Promise.all(ids.map(function(id){var u=libIndex[id].media;if(!u||u.indexOf('data:')===0)return Promise.resolve();return toDataURI(u).then(function(d){var c={};for(var k in libIndex[id])c[k]=libIndex[id][k];c.media=d;libIndex[id]=c;});})).then(function(){return libIndex;});}
  document.getElementById('genlink').onclick=function(){
    var b=buildPlan();var url=athleteURL(b.plan);
-   var out=document.getElementById('linkOut');out.value=url;document.getElementById('linkRow').style.display='flex';out.focus();out.select();
-   setMsg(document.getElementById('pMsg'),'Enlace listo — cópialo y envíalo por WhatsApp',true);
+   var out=document.getElementById('linkOut');var row=document.getElementById('linkRow');row.style.display='flex';
+   out.value=url; setMsg(document.getElementById('pMsg'),'Acortando enlace…',true);
+   fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(url)).then(function(r){return r.text();}).then(function(short){
+     short=(short||'').trim();
+     if(short.indexOf('tinyurl.com')>=0){ out.value=short; setMsg(document.getElementById('pMsg'),'Enlace corto listo ✓ — un solo toque en WhatsApp',true); }
+     else { out.value=url; setMsg(document.getElementById('pMsg'),'Enlace listo (no se pudo acortar; se envía completo)',false); }
+     out.focus();out.select();
+   }).catch(function(e){ out.value=url; setMsg(document.getElementById('pMsg'),'Enlace listo (sin acortar; se envía completo)',false); out.focus();out.select(); });
  };
  document.getElementById('copylink').onclick=function(){
    var out=document.getElementById('linkOut');out.focus();out.select();
