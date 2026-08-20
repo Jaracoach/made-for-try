@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Entrenador · Made For Try</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -169,7 +172,7 @@
         </div>
         <div class="plan-list" id="planList"></div>
         <button class="btn violet" id="genlink" disabled>🔗 Generar enlace del alumno</button>
-        <div class="linkrow" id="linkRow" style="display:none"><input id="linkOut" readonly onclick="this.select()"><button class="btn" id="copylink" style="width:auto;margin:0">Copiar</button></div>
+        <div class="linkrow" id="linkRow" style="display:none"><input id="linkOut" readonly onclick="this.select()"><button class="btn" id="copylink" style="width:auto;margin:0">Copiar</button><button class="btn primary" id="walink" style="width:auto;margin:0">WhatsApp</button></div>
         <button class="btn" id="preview" disabled>Previsualizar</button>
         <button class="btn primary" id="export" disabled>Descargar archivo (sin conexión)</button>
         <div class="msg" id="pMsg"></div>
@@ -329,6 +332,11 @@ var LIB=__DATA__.exercises;
    function ok(){setMsg(document.getElementById('pMsg'),'Enlace copiado ✓ — pégalo en WhatsApp',true);}
    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(out.value).then(ok,function(){try{document.execCommand('copy');ok();}catch(e){}});}
    else{try{document.execCommand('copy');ok();}catch(e){}}
+ };
+ document.getElementById('walink').onclick=function(){
+   var url=document.getElementById('linkOut').value;if(!url)return;
+   var msg='Tu entrenamiento de fuerza. Abrelo y toca \'Iniciar sesion guiada\':\n'+url;
+   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
  };
  document.getElementById('preview').onclick=function(){
    var b=buildPlan();var url=athleteURL(b.plan);
