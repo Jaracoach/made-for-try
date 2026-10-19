@@ -25,13 +25,7 @@ function buildAthleteHTML(plan, libIndex){
       '<button class="start-btn" data-si="'+idx+'">▶ Iniciar sesión guiada</button>'+
       '<span class="start-hint needjs">¿El botón no reacciona? Ábrelo en tu navegador (⋯ → «Abrir en el navegador»).</span>'+
       '<div class="done-badge" id="done-'+idx+'" hidden></div></div>';
-    var num=0;
     var items=s.exercises.map(function(e,i){
-      var prev=s.exercises[i-1], nxt=s.exercises[i+1];
-      if(prev && prev.exercise_id===e.exercise_id) return '';
-      var pair=!!(nxt && nxt.exercise_id===e.exercise_id);
-      if(pair){ e=Object.assign({},e,{note:'Un solo lado: primero lado derecho y luego lado izquierdo ('+dose(e)+' cada lado)'}); }
-      num++; i=num-1;
       var m=MEDIA[e.exercise_id]||{}; var fl=e.flip?' style="transform:scaleX(-1)"':'';
       var img=m.media?('<img loading="lazy"'+fl+' src="'+m.media+'" alt="'+esc(e.name)+'">'):'<div class="noimg">sin imagen</div>';
       var cues=(m.cues&&m.cues.length)?'<ul class="cues">'+m.cues.map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+'</ul>':'';
