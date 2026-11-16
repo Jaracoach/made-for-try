@@ -193,8 +193,8 @@
 fetch('library.json').then(function(r){return r.json();}).then(function(__DATA__){
 var LIB=__DATA__.exercises;
 (function(){
- var GMETA={core:['Core y abdomen','#AE52F4'],gluteos:['Glúteos','#FF6F5E'],cuadriceps:['Cuádriceps','#38C6E4'],isquiotibiales:['Isquios','#47D98D'],pantorrillas:['Pantorrillas','#C6B7EA'],pectoral:['Pectoral','#F5B544'],triceps:['Tríceps','#FF7EB6'],hombros:['Hombros','#5B8DEF'],espalda:['Espalda','#A6E22E'],cuerpo:['Cuerpo completo','#FF9F45']};
- var GORDER=['core','gluteos','cuadriceps','isquiotibiales','pantorrillas','pectoral','triceps','hombros','espalda','cuerpo'];
+ var GMETA={core:['Core y abdomen','#AE52F4'],gluteos:['Glúteos','#FF6F5E'],cuadriceps:['Cuádriceps','#38C6E4'],isquiotibiales:['Isquios','#47D98D'],pantorrillas:['Pantorrillas','#C6B7EA'],pectoral:['Pectoral','#F5B544'],triceps:['Tríceps','#FF7EB6'],hombros:['Hombros','#5B8DEF'],espalda:['Espalda','#A6E22E'],cuerpo:['Cuerpo completo','#FF9F45'],atletismo:['Atletismo','#14B8A6']};
+ var GORDER=['core','gluteos','cuadriceps','isquiotibiales','pantorrillas','pectoral','triceps','hombros','espalda','cuerpo','atletismo'];
  var byId={}; LIB.forEach(function(x){byId[x.exercise_id]=x;});
  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
  var state={groups:new Set(),diffMax:3,inc:false,q:'',selected:[],plan:{plan_id:'PLAN-'+Date.now(),title:'',sessions:[]}};
