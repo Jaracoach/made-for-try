@@ -3,7 +3,7 @@
    Estático legible SIN JS + reproductor guiado CON JS. */
 function buildAthleteHTML(plan, libIndex){
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function dose(e){return e.mode==='TIME' ? (e.target+' s') : (e.target+' reps');}
+  function dose(e){return e.mode==='TIME' ? (e.target+' s') : e.mode==='RUN' ? String(e.target) : (e.target+' reps');}
   function progLabel(s){return s.progression==='VERTICAL' ? 'Por estaciones (vertical)' : 'Circuito (horizontal)';}
   function methodLine(s){
     var parts=[progLabel(s), s.series+' '+(s.series==1?'serie':'series')];
@@ -195,13 +195,19 @@ var PLAYER_JS = [
 "    controls.innerHTML=BACK+'<button class=\"p-btn\" id=\"pause\">⏸ Pausa</button><button class=\"p-btn\" id=\"skip\">Saltar</button>';",
 "    document.getElementById('skip').onclick=next;document.getElementById('pause').onclick=togglePause;wireBack();preloadNext();",
 "    startCountdown(e.target,function(){beep(880,0.18,'square');vib(200);next();});",
+"  } else if(e.mode==='RUN'){",
+"    stage.innerHTML='<div class=\"p-phase\">Carrera</div>'+mediaBox(e)+'<div class=\"p-name\">'+nm+'</div>'+note+'<div class=\"p-target\">'+esc(e.target)+'</div><div class=\"p-serie\" id=\"tmr\" style=\"font-size:20px;margin-top:4px\">0</div>'+cues;",
+"    controls.innerHTML=BACK+'<button class=\"p-btn\" id=\"pause\">⏸ Pausa</button><button class=\"p-btn primary big\" id=\"doneSet\">Marcar como terminado ✓</button>';",
+"    document.getElementById('pause').onclick=togglePause;wireBack();preloadNext();",
+"    document.getElementById('doneSet').onclick=function(){beep(700,0.1);vib(120);next();};",
+"    startStopwatch();",
 "  } else {",
 "    stage.innerHTML='<div class=\"p-phase\">Trabajo</div>'+mediaBox(e)+'<div class=\"p-name\">'+nm+'</div>'+serie+note+'<div class=\"p-target\">'+e.target+' reps</div>'+cues;",
 "    controls.innerHTML=BACK+'<button class=\"p-btn primary big\" id=\"doneSet\">Serie completada ✓</button>';wireBack();preloadNext();",
 "    document.getElementById('doneSet').onclick=function(){beep(700,0.1);vib(120);next();};",
 "  }}",
 "function nextPreview(st){var e=st.nx;if(!e)return '';var m=MEDIA[e.exercise_id]||{};var f=e.flip?' style=\"transform:scaleX(-1)\"':'';",
-"  var tag=cur.s.progression==='VERTICAL'?'Serie':'Vuelta';var dose=e.mode==='TIME'?(e.target+' s'):(e.target+' reps');",
+"  var tag=cur.s.progression==='VERTICAL'?'Serie':'Vuelta';var dose=e.mode==='TIME'?(e.target+' s'):e.mode==='RUN'?String(e.target):(e.target+' reps');",
 "  var last=true;for(var j=cur.i+2;j<cur.steps.length;j++){if(cur.steps[j].kind==='work'){last=false;break;}}",
 "  return '<aside class=\"p-nx\" id=\"pnx\"><div class=\"p-nx-lbl\">Siguiente ejercicio<b>Ponte en posición</b></div>'+",
 "    (m.media?('<div class=\"p-nx-media\"><img'+f+' src=\"'+m.media+'\" alt=\"\" onerror=\"this.parentNode.style.display=\\'none\\'\"></div>'):'')+",
@@ -214,6 +220,7 @@ var PLAYER_JS = [
 "  startCountdown(st.sec,function(){beep(880,0.18,'square');vib(200);next();});}",
 "function startCountdown(sec,onEnd){cur.remain=sec;cur.paused=false;cur.onEnd=onEnd;clearTimer();",
 "  cur.timer=setInterval(function(){if(cur.paused)return;cur.remain--;var t=document.getElementById('tmr');if(t)t.textContent=fmt(cur.remain);if(cur.remain<=3&&cur.remain>0)beep(660,0.07,'sine');var nx=document.getElementById('pnx');if(nx&&cur.remain<=3)nx.classList.add('soon');if(cur.remain<=0){clearTimer();onEnd();}},1000);}",
+"function startStopwatch(){cur.remain=0;cur.paused=false;cur.onEnd=null;clearTimer();var t0=document.getElementById('tmr');if(t0)t0.textContent='0';cur.timer=setInterval(function(){if(cur.paused)return;cur.remain++;var t=document.getElementById('tmr');if(t)t.textContent=fmt(cur.remain);},1000);}",
 "function setPaused(v){if(!cur)return;cur.paused=v;player.classList.toggle('paused',v);var b=document.getElementById('pause');if(b)b.textContent=v?'▶ Reanudar':'⏸ Pausa';}",
 "function togglePause(){if(!cur||!document.getElementById('pause'))return;setPaused(!cur.paused);}",
 "var BACK='<button class=\"p-btn back\" id=\"back\" aria-label=\"Regresar ejercicio\">⏮ Regresar</button>';",
