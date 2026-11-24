@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Zonas de entrenamiento · Made For Try</title>
+<!--
+  Made For Try · zonas.html (esquema v1)
+  Página genérica: NO contiene datos de ningún atleta. Los datos viajan en el fragmento
+  de la URL (zonas.html#z=<base64url sin relleno de deflate-raw del JSON UTF-8>).
+  El fragmento nunca se envía al servidor: todo se decodifica en el navegador.
+-->
+<style>
+:root{
+  --bg:#0b0f14; --card:#121922; --card2:#0e141b; --ink:#eef4fb; --ink2:#9db0c4; --ink3:#6b7f94;
+  --line:#1e2a37; --line2:#2a3a4c;
+  --m4t:#ffd23f; --m4t2:#ffb300;
+  --swim:#2bd4e6; --bike:#ffb33e; --run:#ff5d73; --good:#38d39f; --warn:#ffb33e; --bad:#ff5d73;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  font-synthesis:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.55;-webkit-font-smoothing:antialiased;overflow-wrap:break-word}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 90px}
+h1,h2,h3{line-height:1.15;margin:0}
+a{color:var(--m4t)}
+small{color:var(--ink3)}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+[hidden]{display:none!important}
+
+/* ---------- header (molde) ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(11,15,20,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:10px 16px}
+.hbar{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.3px}
+.brand .dot{width:11px;height:11px;border-radius:3px;background:var(--m4t);box-shadow:0 0 0 3px rgba(255,210,63,.18)}
+.brand small{color:var(--ink2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-size:11px}
+.spacer{flex:1}
+.toggle{display:inline-flex;background:var(--card2);border:1px solid var(--line2);border-radius:999px;padding:3px}
+.toggle button{all:unset;cursor:pointer;padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--ink2);transition:.15s}
+.toggle button.on{background:var(--m4t);color:#1a1205}
+.toggle button:focus-visible{outline:2px solid var(--m4t);outline-offset:2px}
+.nav{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;max-width:1080px;margin-left:auto;margin-right:auto}
+.nav:empty{display:none}
+.nav button{all:unset;cursor:pointer;font-size:11.5px;color:var(--ink2);padding:3px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.nav button:hover{border-color:var(--m4t);color:var(--ink)}
+.nav button:focus-visible{outline:2px solid var(--m4t);outline-offset:1px}
+
+/* ---------- hero (molde) ---------- */
+.hero{padding:34px 0 10px}
+.kicker{color:var(--m4t2);font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:12px}
+.hero h1{font-size:clamp(30px,6vw,52px);font-weight:850;margin:8px 0 2px;letter-spacing:-.5px}
+.hero .sub{color:var(--ink2);font-size:clamp(15px,2.4vw,19px);font-weight:600}
+.hero .sub b{color:var(--ink)}
+.hero .meta{display:flex;gap:6px 18px;flex-wrap:wrap;margin-top:14px;color:var(--ink3);font-size:13px}
+.hero .meta b{color:var(--ink);font-weight:700}
+
+/* ---------- secciones (molde) ---------- */
+section{margin-top:40px;scroll-margin-top:110px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.sec-h .acto{color:var(--m4t2);font-weight:800;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+.sec-h h2{font-size:clamp(21px,3.4vw,28px);font-weight:820;letter-spacing:-.3px}
+.lede{color:var(--ink2);font-size:15.5px;max-width:74ch;margin:0 0 16px}
+
+/* tarjetas (molde) */
+.grid{display:grid;gap:14px}
+.grid>*{min-width:0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:820px){.g3{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+@media(max-width:520px){.g3,.g2{grid-template-columns:1fr}}
+.span2{grid-column:1/-1}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);scroll-margin-top:120px}
+.card.tight{padding:14px}
+.card h3{font-size:16px;font-weight:800;margin-bottom:8px}
+.stat{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:14px;padding:15px}
+.stat .lab{color:var(--ink3);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.stat .val{font-size:26px;font-weight:850;margin-top:4px;letter-spacing:-.5px}
+.stat .val small{font-size:14px;color:var(--ink2);font-weight:700}
+.stat .delta{font-size:12px;font-weight:700;margin-top:3px}
+.up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--ink2)} .wrn{color:var(--warn)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line2)}
+.pill.swim{color:var(--swim);border-color:rgba(43,212,230,.35)}
+.pill.bike{color:var(--bike);border-color:rgba(255,179,62,.35)}
+.pill.run{color:var(--run);border-color:rgba(255,93,115,.35)}
+
+/* dos registros (molde) */
+.coach-note{display:none}
+body.coach .coach-note{display:block}
+.athlete-note{border-left:3px solid var(--m4t);padding:2px 0 2px 13px;color:var(--ink);font-size:15px;margin:10px 0}
+.coach-note{border-left:3px solid var(--line2);padding:10px 12px 10px 13px;margin:10px 0;color:var(--ink2);font-size:13.5px;background:var(--card2);border-radius:0 10px 10px 0}
+.coach-note .tag{display:block;color:var(--m4t2);font-weight:800;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.coach-note .mono b,.coach-note b{color:var(--ink)}
+.coach-only{display:none}
+body.coach .coach-only{display:inline}
+body.coach p.coach-only,body.coach div.coach-only{display:block}
+body.coach th.coach-only,body.coach td.coach-only{display:table-cell}
+
+/* tablas (molde) */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink3);font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+td.mono,th.mono{font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+.t-scroll{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+.t-scroll table th,.t-scroll table td{white-space:nowrap}
+.tag-old{color:var(--ink3)} .tag-new{color:var(--good);font-weight:800}
+
+/* gráficas (molde) */
+.cap{color:var(--ink3);font-size:12px;margin-top:8px}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin:8px 0 2px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.legend i.ln{width:16px;height:0;border-radius:0;border-top:2px dashed var(--m4t);vertical-align:3px}
+.legend i.ln.old{border-top-color:var(--ink3)}
+.legend i.ring{width:11px;height:11px;border-radius:50%;border:2px solid var(--m4t);background:transparent}
+
+.callout{border-radius:14px;padding:13px 15px;border:1px solid var(--line2);background:var(--card2);margin-top:10px}
+.callout.key{border-color:rgba(255,210,63,.4);background:linear-gradient(180deg,rgba(255,210,63,.07),transparent)}
+.callout h4{margin:0;font-size:14.5px;font-weight:800;color:var(--m4t);line-height:1.35}
+.callout.danger{border-color:rgba(255,93,115,.4);background:linear-gradient(180deg,rgba(255,93,115,.07),transparent)}
+.callout.danger h4{color:var(--run)}
+.callout.warn{border-color:rgba(255,179,62,.4);background:linear-gradient(180deg,rgba(255,179,62,.07),transparent)}
+.callout.warn h4{color:var(--warn)}
+.callout.good{border-color:rgba(56,211,159,.4);background:linear-gradient(180deg,rgba(56,211,159,.07),transparent)}
+.callout.good h4{color:var(--good)}
+
+.badge{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.badge.bw{white-space:normal;line-height:1.4;display:inline-block}
+.b-ok{background:rgba(56,211,159,.14);color:var(--good)}
+.b-lo{background:rgba(255,93,115,.14);color:var(--bad)}
+.b-hi{background:rgba(255,179,62,.16);color:var(--warn)}
+.b-off{background:var(--card2);color:var(--ink3);border:1px solid var(--line2)}
+
+footer{margin-top:54px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink3);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer b{color:var(--ink2)}
+
+/* ---------- zonas (nuevo, sobre el molde) ---------- */
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+button.stat{all:unset;box-sizing:border-box;display:block;cursor:pointer;background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:14px;padding:13px 14px;transition:border-color .15s;min-width:0}
+button.stat:hover{border-color:var(--line2)}
+button.stat:focus-visible{outline:2px solid var(--m4t);outline-offset:2px}
+.stat .lab{display:flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:9px;height:9px;border-radius:3px;flex:none}
+.sw.swim{background:var(--swim)} .sw.bike{background:var(--bike)} .sw.run{background:var(--run)}
+.counts{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.cnt{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;border:1px solid var(--line2);background:var(--card2)}
+.zc-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.zc-h h3{margin:0}
+.thr{display:flex;align-items:baseline;gap:4px 9px;flex-wrap:wrap;margin:12px 0 2px}
+.thr .o{font-size:19px;font-weight:800;color:var(--ink3)}
+.thr .ar{color:var(--ink3);font-weight:800}
+.thr .n{font-size:30px;font-weight:850;letter-spacing:-.6px;line-height:1}
+.thr .u{color:var(--ink2);font-weight:700;font-size:13px}
+.thr .delta{font-size:12.5px;font-weight:800}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.note-s{font-size:13px;color:var(--ink2);margin:6px 0 0}
+.viz{margin-top:12px}
+.viz svg{display:block;width:100%;height:auto;touch-action:pan-y;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;cursor:pointer}
+.viz svg:focus{outline:none}
+.viz svg:focus-visible{outline:2px solid var(--m4t);outline-offset:3px;border-radius:6px}
+.zleg{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.zleg button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--ink2);padding:3px 9px 3px 6px;border:1px solid var(--line);border-radius:999px}
+.zleg button i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.zleg button.on{border-color:var(--ink2);color:var(--ink);background:var(--card2)}
+.zleg button:focus-visible{outline:2px solid var(--m4t);outline-offset:1px}
+.readout{margin-top:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px;color:var(--ink2);min-height:40px}
+.readout b{color:var(--ink);font-weight:800}
+.nw{white-space:nowrap}
+.dir{display:flex;justify-content:space-between;gap:10px;color:var(--ink3);font-size:11.5px;margin-top:6px}
+details.tv{margin-top:12px}
+details.tv summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink2)}
+details.tv[open] summary{margin-bottom:8px}
+th .nu{text-transform:none;letter-spacing:0;font-weight:700}
+td small{font-size:11px}
+@media(max-width:520px){.t-scroll table{font-size:12.5px}.t-scroll th,.t-scroll td{padding:7px 8px}}
+.ok{color:var(--good);font-weight:800} .ne{color:var(--warn);font-weight:800}
+.curve-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+.curve-h h3{margin:0}
+.toggle.seg button{padding:5px 11px;font-size:12px}
+.ci{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+.ci-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.ci-h b{font-size:14px}
+.ci-h .delta{margin-left:auto;font-size:12.5px;font-weight:800}
+.br{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink2);margin-top:7px}
+.br b{color:var(--ink);white-space:nowrap}
+.track{height:12px;background:var(--line);border-radius:0 4px 4px 0;margin-top:3px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:0 4px 4px 0}
+.track.hatch{background:repeating-linear-gradient(135deg,var(--line2) 0 5px,transparent 5px 11px);border-radius:4px;margin-top:10px}
+.ci.inc .ci-h b{color:var(--ink2)}
+.steps{display:grid;gap:14px;grid-template-columns:repeat(3,1fr)}
+@media(max-width:820px){.steps{grid-template-columns:1fr}}
+.step svg{display:block;margin-bottom:10px;max-width:100%}
+.step p{margin:4px 0 0;color:var(--ink);font-size:14.5px}
+.step .num{color:var(--m4t2);font-weight:800;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+.formula{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink);line-height:1.75}
+.formula sub{font-size:.75em}
+.hint{color:var(--ink2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <span class="brand"><span class="dot"></span>MADE FOR TRY <small>· zonas de entrenamiento</small></span>
+    <span class="spacer"></span>
+    <div class="toggle" id="regToggle" role="group" aria-label="Registro">
+      <button type="button" class="on" data-reg="athlete" aria-pressed="true">Para el atleta</button>
+      <button type="button" data-reg="coach" aria-pressed="false">Para el entrenador</button>
+    </div>
+  </div>
+  <nav class="nav" id="nav" aria-label="Secciones"></nav>
+</header>
+
+<div class="wrap">
+  <main id="app">
+    <div class="hero">
+      <div class="kicker">Zonas de entrenamiento</div>
+      <h1>Abriendo tus zonas…</h1>
+      <noscript><div class="callout danger"><h4>Esta página necesita JavaScript para mostrar tus zonas.</h4></div></noscript>
+    </div>
+  </main>
+  <footer>
+    <span>Made For Try (M4T) — entrenamos con método, no con suerte.</span>
+    <span class="mono" id="footMeta"></span>
+  </footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const app = document.getElementById('app');
+const navEl = document.getElementById('nav');
+const footMeta = document.getElementById('footMeta');
+
+/* ---------- registro: interruptor atleta / entrenador (comportamiento del molde) ---------- */
+const rt = document.getElementById('regToggle');
+rt.addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  [...rt.children].forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+  const coach = b.dataset.reg === 'coach';
+  document.body.classList.toggle('coach', coach);
+  document.querySelectorAll('details.tv').forEach(d => { d.open = coach; });
+});
+
+/* ---------- utilidades ---------- */
+const MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ESC[c]);
+const num = x => typeof x === 'number' ? x : (typeof x === 'string' && x.trim() !== '' ? Number(x) : NaN);
+const isPos = x => typeof x === 'number' && isFinite(x) && x > 0;
+const f1 = x => String(Math.round(x * 10) / 10);
+function ymd(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m && +m[2] >= 1 && +m[2] <= 12 ? [+m[1], +m[2], +m[3]] : null; }
+function fdate(s, yr) { const d = ymd(s); if (!d) return s ? String(s) : '—'; return d[2] + ' ' + MES[d[1] - 1] + (yr === false ? '' : ' ' + d[0]); }
+function ndays(a, b) { const x = ymd(a), y = ymd(b); return x && y ? Math.round((Date.UTC(y[0], y[1] - 1, y[2]) - Date.UTC(x[0], x[1] - 1, x[2])) / 864e5) : NaN; }
+function nf(x, d) {
+  d = d || 0; if (!isFinite(x)) return '—';
+  const r = Math.abs(x).toFixed(d).split('.'); let i = r[0];
+  if (i.length > 3) i = i.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (x < 0 && +Math.abs(x).toFixed(d) !== 0 ? '−' : '') + i + (r[1] ? ',' + r[1] : '');
+}
+function sgn(x, d) { if (!isFinite(x)) return '—'; const r = +x.toFixed(d || 0); return r === 0 ? nf(0, d) : (r > 0 ? '+' : '−') + nf(Math.abs(r), d); }
+function mmss(sec) {
+  if (!isPos(sec)) return '—';
+  let t = Math.round(sec); const h = Math.floor(t / 3600); t -= h * 3600;
+  const mm = Math.floor(t / 60), ss = t % 60;
+  return (h ? h + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0');
+}
+function durLab(s) {
+  s = Math.round(s); if (!(s > 0)) return '—';
+  if (s < 60) return s + ' s';
+  if (s < 3600) { const m = Math.floor(s / 60), r = s % 60; return m + ' min' + (r ? ' ' + r + ' s' : ''); }
+  const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60); return h + ' h' + (m ? ' ' + m + ' min' : '');
+}
+const durTick = s => s < 60 ? s + ' s' : s < 3600 ? (s / 60) + '′' : (s / 3600) + ' h';
+
+/* ---------- deportes y métricas ---------- */
+const SP = {
+  swim: { name: 'Natación', pill: 'NADO', acto: 'Nado', de: 'natación' },
+  bike: { name: 'Ciclismo', pill: 'BICI', acto: 'Bici', de: 'ciclismo' },
+  run:  { name: 'Carrera', pill: 'CARRERA', acto: 'Carrera', de: 'carrera' }
+};
+const SP_ORDER = ['swim', 'bike', 'run'];
+const MT = { hr: { name: 'Frecuencia cardíaca', short: 'FC' }, sp: { name: 'Ritmo', short: 'Ritmo' }, pw: { name: 'Potencia', short: 'Potencia' } };
+const PREF = { swim: ['sp', 'hr', 'pw'], bike: ['pw', 'hr', 'sp'], run: ['sp', 'hr', 'pw'] };
+const BASE = { swim: '#2bd4e6', bike: '#ffb33e', run: '#ff5d73', old: '#9db0c4', m4t: '#ffd23f' };
+const STATES = ['sube', 'baja', 'igual', 'sin_dato', 'artefacto'];
+const thrName = (sp, m) => m === 'hr' ? 'LTHR' : m === 'pw' ? (sp === 'run' ? 'rFTPw' : 'FTP') : (sp === 'swim' ? 'CSS' : sp === 'run' ? 'ritmo umbral' : 'velocidad umbral');
+const isPace = (sp, m) => m === 'sp' && sp !== 'bike';
+const perOf = sp => sp === 'swim' ? 100 : 1000;
+/* valor legible: ritmo en min/km o min/100 m (nunca m/s en el registro atleta), FC en ppm, potencia en W */
+function fv(sp, m, x) {
+  if (!isFinite(x)) return { v: '—', u: '' };
+  if (m === 'sp') {
+    if (sp === 'bike') return { v: nf(x * 3.6, 1), u: 'km/h' };
+    if (!(x > 0)) return { v: '—', u: '' };
+    return sp === 'swim' ? { v: mmss(100 / x), u: '/100 m' } : { v: mmss(1000 / x), u: '/km' };
+  }
+  return { v: nf(x), u: m === 'hr' ? 'ppm' : 'W' };
+}
+const fvs = (sp, m, x) => { const r = fv(sp, m, x); return r.u ? r.v + ' ' + r.u : r.v; };
+
+/* ---------- zonas ---------- */
+function cleanZ(set) {
+  if (!set || !Array.isArray(set.z)) return null;
+  const z = set.z.filter(p => Array.isArray(p) && p.length >= 2 && isFinite(num(p[0])) && isFinite(num(p[1]))).map(p => [num(p[0]), num(p[1])]);
+  return z.length ? z : null;
+}
+/* la última zona suele cerrar con un centinela (255 ppm, 2000 W, velocidad imposible): se trata como abierta */
+function openHi(m, a, b, t) {
+  if (!isFinite(b)) return true;
+  if (m === 'hr') return b >= 230;
+  if (m === 'pw') return b >= 1500 || (t > 0 && b > t * 3);
+  return t > 0 ? b > t * 1.6 : (a > 0 && b > a * 1.6);
+}
+function zoneNames(n, scheme) {
+  const s = String(scheme || '').toLowerCase();
+  if (n === 7 && s.indexOf('friel') >= 0) return ['Z1', 'Z2', 'Z3', 'Z4', 'Z5a', 'Z5b', 'Z5c'];
+  if (n === 7 && s.indexOf('80/20') >= 0) return ['Z1', 'Z2', 'ZX', 'Z3', 'ZY', 'Z4', 'Z5'];
+  return Array.from({ length: n }, (_, i) => 'Z' + (i + 1));
+}
+function zEnds(m, z, i, n, t) { return { lo: !(z[0] > 0), hi: i === n - 1 && openHi(m, z[0], z[1], t) }; }
+/* rango legible de una zona */
+function zr(sp, m, z, i, n, t) {
+  const e = zEnds(m, z, i, n, t);
+  if (isPace(sp, m)) {
+    const u = ' ' + fv(sp, m, 1).u, slow = fv(sp, m, z[0]).v, fast = fv(sp, m, z[1]).v;
+    if (e.lo && e.hi) return 'cualquier ritmo';
+    if (e.lo) return fast + u + ' o más lento';
+    if (e.hi) return slow + u + ' o más rápido';
+    return fast + '–' + slow + u;
+  }
+  const a = fv(sp, m, z[0]), b = fv(sp, m, z[1]);
+  if (e.lo && e.hi) return 'todo el rango';
+  if (e.lo) return 'hasta ' + b.v + ' ' + b.u;
+  if (e.hi) return a.v + ' ' + a.u + ' o más';
+  return a.v + '–' + b.v + ' ' + a.u;
+}
+/* celda compacta para tablas: la unidad va en la cabecera; los extremos abiertos en dos líneas */
+function zcell(sp, m, z, i, n, t) {
+  const e = zEnds(m, z, i, n, t);
+  if (isPace(sp, m)) {
+    const slow = fv(sp, m, z[0]).v, fast = fv(sp, m, z[1]).v;
+    if (e.lo && e.hi) return 'cualquiera';
+    if (e.lo) return esc(fast) + '<br><small>o más lento</small>';
+    if (e.hi) return esc(slow) + '<br><small>o más rápido</small>';
+    return esc(fast + '–' + slow);
+  }
+  const a = fv(sp, m, z[0]).v, b = fv(sp, m, z[1]).v;
+  if (e.lo && e.hi) return 'todo';
+  if (e.lo) return esc(b) + '<br><small>o menos</small>';
+  if (e.hi) return esc(a) + '<br><small>o más</small>';
+  return esc(a + '–' + b);
+}
+const unitLab = (sp, m) => isPace(sp, m) ? (sp === 'swim' ? 'min/100 m' : 'min/km') : m === 'sp' ? 'km/h' : m === 'hr' ? 'ppm' : 'W';
+function zpct(m, z, i, n, t) {
+  if (!(t > 0)) return '—';
+  const e = zEnds(m, z, i, n, t), p = x => nf(x / t * 100);
+  if (e.lo && e.hi) return '—';
+  if (e.lo) return '≤ ' + p(z[1]) + '%';
+  if (e.hi) return '≥ ' + p(z[0]) + '%';
+  return p(z[0]) + '–' + p(z[1]) + '%';
+}
+function zms(m, z, i, n, t, bare) {
+  const e = zEnds(m, z, i, n, t), u = bare ? '' : ' m/s';
+  if (e.lo) return '≤ ' + nf(z[1], 2) + u;
+  if (e.hi) return '≥ ' + nf(z[0], 2) + u;
+  return nf(z[0], 2) + '–' + nf(z[1], 2) + u;
+}
+/* comprobación «nuevo = anterior × k» frontera a frontera (centinelas y ceros aparte) */
+function kCheck(m, pz, z, k, i, n, tP, tN) {
+  const ep = zEnds(m, pz, i, n, tP), en = zEnds(m, z, i, n, tN);
+  const near = (a, b) => m === 'sp' ? Math.abs(a - b) <= Math.abs(b) * 0.006 + 1e-9 : Math.abs(a - b) <= 1.01;
+  let ok = true; const exp = [];
+  if (!ep.lo && !en.lo) { ok = ok && near(z[0], pz[0] * k); exp.push(pz[0] * k); }
+  if (!ep.hi && !en.hi) { ok = ok && near(z[1], pz[1] * k); exp.push(pz[1] * k); }
+  if (ok) return '<span class="ok">✓</span>';
+  return '<span class="ne">≠ ' + esc(exp.map(x => m === 'sp' ? nf(x, 2) : nf(x)).join('–')) + '</span>';
+}
+
+/* ---------- color: rampa ordinal de un solo tono por deporte (OKLab), gris pizarra para «antes» ---------- */
+const s2l = c => (c /= 255) <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+const l2s = c => Math.round(255 * Math.min(1, Math.max(0, c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)));
+function toLab(h) {
+  const r = s2l(parseInt(h.slice(1, 3), 16)), g = s2l(parseInt(h.slice(3, 5), 16)), b = s2l(parseInt(h.slice(5, 7), 16));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b),
+        m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b),
+        s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+}
+function labLin(L, a, b) {
+  const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3), m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3), s = Math.pow(L - 0.0894841775 * a - 1.2914855480 * b, 3);
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+}
+function lchHex(L, C, h) {
+  const ok = c => labLin(L, c * Math.cos(h), c * Math.sin(h)).every(v => v >= -1e-4 && v <= 1.0001);
+  if (!ok(C)) { let lo = 0, hi = C; for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (ok(mid)) lo = mid; else hi = mid; } C = lo; }
+  return '#' + labLin(L, C * Math.cos(h), C * Math.sin(h)).map(v => l2s(v).toString(16).padStart(2, '0')).join('');
+}
+const RAMPS = {};
+function ramp(key, n) {
+  const id = key + n; if (RAMPS[id]) return RAMPS[id];
+  const old = key === 'old', lab = toLab(BASE[key] || BASE.old), C = Math.hypot(lab[1], lab[2]) * (old ? 0.6 : 1), h = Math.atan2(lab[2], lab[1]);
+  const L0 = old ? 0.46 : 0.5, L1 = old ? 0.84 : 0.9;
+  return (RAMPS[id] = Array.from({ length: n }, (_, i) => {
+    const L = n === 1 ? (old ? 0.62 : 0.7) : L0 + (L1 - L0) * i / (n - 1);
+    return { c: lchHex(L, C, h), t: L > 0.72 ? '#0b0f14' : '#ffffff' };
+  }));
+}
+
+/* ---------- decodificación del enlace ---------- */
+/* Respaldo mínimo de DEFLATE crudo (RFC 1951) para navegadores sin DecompressionStream('deflate-raw'). */
+function inflateRaw(src) {
+  let p = 0, bb = 0, bc = 0, n = 0, out = new Uint8Array(Math.max(1024, src.length * 6));
+  const need = k => { if (n + k > out.length) { const o = new Uint8Array(Math.max(out.length * 2, n + k)); o.set(out.subarray(0, n)); out = o; } };
+  const bits = k => {
+    while (bc < k) { if (p >= src.length) throw new Error('datos truncados'); bb |= src[p++] << bc; bc += 8; }
+    const v = bb & ((1 << k) - 1); bb >>>= k; bc -= k; return v;
+  };
+  const table = (len, off, cnt) => {
+    const count = new Uint16Array(16), offs = new Uint16Array(16), sym = new Uint16Array(cnt);
+    for (let i = 0; i < cnt; i++) count[len[off + i]]++;
+    count[0] = 0;
+    for (let i = 1; i < 16; i++) offs[i] = offs[i - 1] + count[i - 1];
+    for (let i = 0; i < cnt; i++) if (len[off + i]) sym[offs[len[off + i]]++] = i;
+    return { count, sym };
+  };
+  const decode = h => {
+    let code = 0, first = 0, index = 0;
+    for (let l = 1; l < 16; l++) {
+      code |= bits(1); const c = h.count[l];
+      if (code - c < first) return h.sym[index + code - first];
+      index += c; first = (first + c) << 1; code <<= 1;
+    }
+    throw new Error('código inválido');
+  };
+  const LB = [3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+  const LE = [0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  const DB = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+  const DE = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  const ORD = [16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+  let fixL = null, fixD = null, last = 0;
+  do {
+    last = bits(1); const type = bits(2);
+    if (type === 0) {
+      bb = 0; bc = 0;
+      if (p + 4 > src.length) throw new Error('datos truncados');
+      const len = src[p] | (src[p + 1] << 8), nlen = src[p + 2] | (src[p + 3] << 8); p += 4;
+      if ((len ^ 0xffff) !== nlen) throw new Error('bloque inválido');
+      if (p + len > src.length) throw new Error('datos truncados');
+      need(len); out.set(src.subarray(p, p + len), n); n += len; p += len; continue;
+    }
+    let lt, dt;
+    if (type === 1) {
+      if (!fixL) {
+        const l = new Uint8Array(318);
+        for (let i = 0; i < 288; i++) l[i] = i < 144 ? 8 : i < 256 ? 9 : i < 280 ? 7 : 8;
+        for (let i = 288; i < 318; i++) l[i] = 5;
+        fixL = table(l, 0, 288); fixD = table(l, 288, 30);
+      }
+      lt = fixL; dt = fixD;
+    } else if (type === 2) {
+      const nl = bits(5) + 257, nd = bits(5) + 1, nc = bits(4) + 4, l = new Uint8Array(320), cl = new Uint8Array(19);
+      for (let i = 0; i < nc; i++) cl[ORD[i]] = bits(3);
+      const ct = table(cl, 0, 19);
+      for (let i = 0; i < nl + nd;) {
+        const s = decode(ct);
+        if (s < 16) { l[i++] = s; continue; }
+        let r, v = 0;
+        if (s === 16) { if (!i) throw new Error('repetición inválida'); v = l[i - 1]; r = 3 + bits(2); }
+        else if (s === 17) r = 3 + bits(3);
+        else r = 11 + bits(7);
+        if (i + r > nl + nd) throw new Error('longitudes inválidas');
+        while (r--) l[i++] = v;
+      }
+      lt = table(l, 0, nl); dt = table(l, nl, nd);
+    } else throw new Error('tipo de bloque inválido');
+    for (;;) {
+      let s = decode(lt);
+      if (s < 256) { need(1); out[n++] = s; continue; }
+      if (s === 256) break;
+      s -= 257; if (s >= 29) throw new Error('longitud inválida');
+      const len = LB[s] + bits(LE[s]), d = decode(dt);
+      if (d >= 30) throw new Error('distancia inválida');
+      const dist = DB[d] + bits(DE[d]);
+      if (dist > n) throw new Error('distancia inválida');
+      need(len); for (let k = 0; k < len; k++, n++) out[n] = out[n - dist];
+    }
+  } while (!last);
+  return out.subarray(0, n);
+}
+function getZ() { const m = /(?:^#|[#&?])z=([^&#]*)/.exec(location.hash || ''); return m ? m[1] : null; }
+async function decodeZ(raw) {
+  let s = raw; try { s = decodeURIComponent(raw); } catch (e) { /* se usa tal cual */ }
+  s = s.replace(/\s+/g, '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  if (!s || !/^[A-Za-z0-9_-]+$/.test(s)) throw new Error('el fragmento #z= no es base64url');
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  let out = null;
+  if (typeof DecompressionStream === 'function') {
+    try {
+      const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      out = new Uint8Array(await new Response(st).arrayBuffer());
+    } catch (e) { out = null; }
+  }
+  if (!out) out = inflateRaw(bytes);
+  const obj = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(out));
+  if (!obj || typeof obj !== 'object' || !obj.d || typeof obj.d !== 'object') throw new Error('el JSON no trae «d»');
+  return obj;
+}
+
+/* ---------- gráfica 1: zonas antes / ahora (barras segmentadas SVG) ---------- */
+let UID = 0;
+const CHARTS = [];
+function Ribbon(host, o) {
+  /* o: {sport, met, A (zonas antes|null), B (zonas principales), tA, tB, names, labA, labB, sel, aria} */
+  const self = { sel: o.sel, onSel: null };
+  const uid = ++UID, A = o.A, B = o.B, both = !!A;
+  let lo = Infinity, hi = -Infinity, oL = false, oH = false;
+  [[A, o.tA], [B, o.tB]].forEach(([z, t]) => {
+    if (!z) return; const k = z.length, eL = !(z[0][0] > 0), eH = openHi(o.met, z[k - 1][0], z[k - 1][1], t);
+    oL = oL || eL; oH = oH || eH;
+    lo = Math.min(lo, eL ? (k > 1 ? z[1][0] : z[0][1]) : z[0][0]);
+    hi = Math.max(hi, eH ? (k > 1 ? z[k - 1][0] : z[0][0]) : z[k - 1][1]);
+  });
+  [o.tA, o.tB].forEach(t => { if (t > 0) { lo = Math.min(lo, t); hi = Math.max(hi, t); } });
+  if (!(hi > lo)) { const c = o.tB > 0 ? o.tB : (isFinite(lo) && lo > 0 ? lo : 1); lo = c * 0.8; hi = c * 1.2; }
+  const span = hi - lo; lo -= span * (oL ? 0.22 : 0.03); hi += span * (oH ? 0.22 : 0.03);
+  const cA = A ? ramp('old', A.length) : null, cB = ramp(o.sport, B.length);
+  const BH = 26, yA = 22, yB = both ? 78 : 22, H = both ? 128 : 54;
+  const geo = (z, t, X) => z.map((q, i) => {
+    const k = z.length, eL = i === 0 && !(q[0] > 0), eH = i === k - 1 && openHi(o.met, q[0], q[1], t);
+    let a = i === 0 ? q[0] : (z[i - 1][1] + q[0]) / 2, b = i === k - 1 ? q[1] : (q[1] + z[i + 1][0]) / 2;
+    if (eL) a = lo; if (eH) b = hi;
+    const fl = a <= lo, fr = b >= hi; a = Math.max(a, lo); b = Math.min(b, hi);
+    return { i, x0: X(a), x1: X(Math.max(a, b)), fl, fr };
+  });
+  function bar(g, col, y, W) {
+    let s = ''; const k = g.length;
+    g.forEach(q => {
+      const x = q.x0 + (q.i ? 1 : 0), w = q.x1 - q.x0 - (q.i ? 1 : 0) - (q.i < k - 1 ? 1 : 0);
+      if (w > 0.5) s += `<rect x="${f1(x)}" y="${y}" width="${f1(w)}" height="${BH}" rx="${f1(Math.min(4, w / 2))}" fill="${col[q.i].c}"/>`;
+    });
+    const a = g[0], b = g[k - 1], fwA = a.fl ? Math.min(26, (a.x1 - a.x0) * 0.7) : 0, fwB = b.fr ? Math.min(26, (b.x1 - b.x0) * 0.7) : 0;
+    if (fwA > 1) s += `<rect x="${f1(a.x0)}" y="${y}" width="${f1(fwA)}" height="${BH}" fill="url(#fl${uid})" pointer-events="none"/>`;
+    if (fwB > 1) s += `<rect x="${f1(b.x1 - fwB)}" y="${y}" width="${f1(fwB)}" height="${BH}" fill="url(#fr${uid})" pointer-events="none"/>`;
+    g.forEach(q => {
+      const nm = o.names[q.i] || ''; const tw = nm.length * 7 + 10;
+      const l0 = q.x0 + (q === a ? fwA * 0.6 : 0), l1 = q.x1 - (q === b ? fwB * 0.6 : 0);
+      if (l1 - l0 < tw) return;
+      s += `<text x="${f1((l0 + l1) / 2)}" y="${y + BH / 2 + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="${col[q.i].t}" pointer-events="none">${esc(nm)}</text>`;
+    });
+    const q = g[self.sel];
+    if (q && q.x1 - q.x0 > 2) s += `<rect x="${f1(q.x0 + 1)}" y="${y - 1}" width="${f1(q.x1 - q.x0 - 2)}" height="${BH + 2}" rx="5" fill="none" stroke="#eef4fb" stroke-width="2" pointer-events="none"/>`;
+    return s;
+  }
+  function marker(t, edge, down, strong, rowLab, X, W) {
+    if (!(t > 0)) return '';
+    const x = X(t); if (x < -1 || x > W + 1) return '';
+    const tri = down ? `M${f1(x - 5)} ${edge - 8}L${f1(x + 5)} ${edge - 8}L${f1(x)} ${edge - 2}Z` : `M${f1(x - 5)} ${edge + 8}L${f1(x + 5)} ${edge + 8}L${f1(x)} ${edge + 2}Z`;
+    const txt = 'umbral ' + fvs(o.sport, o.met, t), tw = txt.length * (strong ? 6.3 : 5.9);
+    const cx = Math.min(Math.max(x, rowLab.length * 7.6 + 12 + tw / 2), W - tw / 2 - 1);
+    const ty = down ? edge - 10 : edge + 20;
+    return `<path d="${tri}" fill="${strong ? '#eef4fb' : '#9db0c4'}"/><text x="${f1(cx)}" y="${ty}" text-anchor="middle" font-size="11" font-weight="${strong ? 800 : 600}" fill="${strong ? '#eef4fb' : '#9db0c4'}">${esc(txt)}</text>`;
+  }
+  self.draw = function () {
+    const W = Math.round(host.clientWidth); if (W < 40) return;
+    const X = v => (v - lo) / (hi - lo) * W;
+    const gA = A ? geo(A, o.tA, X) : null, gB = geo(B, o.tB, X);
+    Object.assign(self, { W, gA, gB });
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(o.aria)}"><defs>` +
+      `<linearGradient id="fl${uid}"><stop offset="0" stop-color="#121922"/><stop offset="1" stop-color="#121922" stop-opacity="0"/></linearGradient>` +
+      `<linearGradient id="fr${uid}"><stop offset="0" stop-color="#121922" stop-opacity="0"/><stop offset="1" stop-color="#121922"/></linearGradient></defs>`;
+    if (gA && A.length === B.length) {
+      const pa = gA[self.sel], pb = gB[self.sel];
+      if (pa && pb) s += `<polygon points="${f1(pa.x0)},${yA + BH} ${f1(pa.x1)},${yA + BH} ${f1(pb.x1)},${yB} ${f1(pb.x0)},${yB}" fill="${cB[self.sel].c}" opacity=".22"/>`;
+      for (let i = 1; i < B.length; i++) {
+        const xa = gA[i].x0, xb = gB[i].x0;
+        if (xa > 0.5 && xa < W - 0.5 && xb > 0.5 && xb < W - 0.5) s += `<line x1="${f1(xa)}" y1="${yA + BH + 1}" x2="${f1(xb)}" y2="${yB - 1}" stroke="#3a4d63" stroke-width="1"/>`;
+      }
+    }
+    const row = (txt, y) => `<text x="0" y="${y}" font-size="10.5" font-weight="800" letter-spacing=".8" fill="#6b7f94">${esc(txt)}</text>`;
+    if (both) {
+      s += bar(gA, cA, yA, W) + bar(gB, cB, yB, W);
+      s += row(o.labA, 12) + row(o.labB, yB + BH + 20);
+      s += marker(o.tA, yA, true, false, o.labA, X, W) + marker(o.tB, yB + BH, false, true, o.labB, X, W);
+    } else {
+      s += bar(gB, cB, yB, W) + row(o.labB, 12) + marker(o.tB, yB, true, true, o.labB, X, W);
+    }
+    host.innerHTML = s + '</svg>';
+  };
+  const pick = ev => {
+    const svg = host.firstElementChild; if (!svg || !self.gB) return;
+    const r = svg.getBoundingClientRect(); if (!r.width) return;
+    const x = (ev.clientX - r.left) * self.W / r.width, y = (ev.clientY - r.top) * H / r.height;
+    const g = self.gA && y < (yA + BH + yB) / 2 ? self.gA : self.gB;
+    let best = -1, bd = 1e9;
+    g.forEach(q => { if (q.x1 - q.x0 <= 0.5) return; const d = x < q.x0 ? q.x0 - x : x > q.x1 ? x - q.x1 : 0; if (d < bd) { bd = d; best = q.i; } });
+    if (best >= 0 && best !== self.sel) { self.sel = best; self.draw(); if (self.onSel) self.onSel(best); }
+  };
+  host.addEventListener('pointerdown', ev => { try { host.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ } pick(ev); });
+  host.addEventListener('pointermove', ev => { if (ev.pointerType === 'mouse' || ev.buttons) pick(ev); });
+  CHARTS.push(self);
+  return self;
+}
+
+/* ---------- gráfica 2: curva de rendimiento (eje X logarítmico) ---------- */
+function niceStep(range, target) {
+  const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+}
+function yTicks(sp, m, v0, v1, Y) {
+  const out = [];
+  if (isPace(sp, m)) {
+    /* el eje es lineal en velocidad: un paso uniforme de ritmo se aprieta hacia abajo (ritmos lentos).
+       Se elige el paso más fino que deja 3–6 marcas a ≥ 22 px, descartando como mucho una abajo. */
+    const per = perOf(sp), tF = per / v1, tS = per / v0;
+    const steps = [5, 10, 15, 30, 60, 120, 300, 600].map(st => {
+      const kept = []; let drop = 0;
+      for (let t = Math.ceil(tF / st) * st; t <= tS + 1e-9; t += st) { const y = Y(per / t); if (!kept.length || Math.abs(y - kept[kept.length - 1].y) >= 22) kept.push({ t, y }); else drop++; }
+      return { kept, drop };
+    });
+    const fit = maxDrop => steps.find(c => c.kept.length >= 3 && c.kept.length <= 6 && c.drop <= maxDrop);
+    const best = fit(0) || fit(1) || steps.find(c => c.kept.length >= 2 && c.kept.length <= 6);
+    (best ? best.kept : []).forEach(k => out.push({ v: per / k.t, lab: mmss(k.t) }));
+  } else if (m === 'sp') {
+    const a = v0 * 3.6, b = v1 * 3.6, st = niceStep(b - a, 4);
+    for (let t = Math.ceil(a / st) * st; t <= b + 1e-9; t += st) out.push({ v: t / 3.6, lab: nf(t, st < 1 ? 1 : 0) });
+  } else {
+    const st = niceStep(v1 - v0, 4);
+    for (let t = Math.ceil(v0 / st) * st; t <= v1 + 1e-9; t += st) out.push({ v: t, lab: nf(t, st < 1 ? 1 : 0) });
+  }
+  return out;
+}
+function Curve(host, o) {
+  /* o: {sport, met, pts [[s,v,fecha]] ordenados, st, tN, tP, showNew, aria} */
+  const pts = o.pts, col = BASE[o.sport] || BASE.old;
+  const i20 = pts.findIndex(p => p[0] === 1200);
+  let near20 = 0; pts.forEach((p, i) => { if (Math.abs(Math.log(p[0] / 1200)) < Math.abs(Math.log(pts[near20][0] / 1200))) near20 = i; });
+  const self = { sel: i20 >= 0 ? i20 : near20, onSel: null };
+  const lines = [];
+  if (o.showNew && o.tN > 0) lines.push({ v: o.tN, c: '#ffd23f', strong: true, lab: 'umbral nuevo ' + fvs(o.sport, o.met, o.tN) });
+  if (o.tP > 0 && !(o.showNew && Math.abs(o.tP - o.tN) < 1e-9)) lines.push({ v: o.tP, c: '#6b7f94', strong: false, lab: (o.showNew ? 'antes ' : 'umbral vigente ') + fvs(o.sport, o.met, o.tP) });
+  const pinTxt = o.st === 'artefacto' ? '20′ · dato descartado' : (o.showNew ? '20′ · fija tu umbral' : (o.st === 'sin_dato' ? '20′ · sin dato' : '20′'));
+  self.draw = function () {
+    const W = Math.round(host.clientWidth); if (W < 40) return;
+    const H = W < 520 ? 240 : 280, m = { l: 46, r: 14, t: 30, b: 26 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const s0 = Math.min(5, pts[0][0]), s1 = Math.max(10800, pts[pts.length - 1][0]), L0 = Math.log10(s0), L1 = Math.log10(s1);
+    const X = s => m.l + (Math.log10(s) - L0) / (L1 - L0) * pw;
+    const vs = pts.map(p => p[1]).concat(lines.map(l => l.v));
+    let v0 = Math.min.apply(null, vs), v1 = Math.max.apply(null, vs);
+    const pad = (v1 - v0) * 0.1 || Math.abs(v1) * 0.05 || 1; v0 -= pad; v1 += pad;
+    if (v0 <= 0 && o.met === 'sp') v0 = Math.min.apply(null, vs) * 0.9;
+    const Y = v => m.t + (1 - (v - v0) / (v1 - v0)) * ph, bot = m.t + ph;
+    Object.assign(self, { W, X });
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" tabindex="0" role="img" aria-label="${esc(o.aria)}">`;
+    yTicks(o.sport, o.met, v0, v1, Y).forEach(t => {
+      const y = Y(t.v); if (y < m.t - 0.5 || y > bot + 0.5) return;
+      s += `<line x1="${m.l}" x2="${W - m.r}" y1="${f1(y)}" y2="${f1(y)}" stroke="#1e2a37"/><text x="${m.l - 7}" y="${f1(y + 3.5)}" text-anchor="end" font-size="10.5" fill="#6b7f94">${esc(t.lab)}</text>`;
+    });
+    [5, 30, 60, 300, 1200, 3600, 10800].forEach(t => {
+      if (t < s0 || t > s1) return; const x = X(t);
+      s += `<line x1="${f1(x)}" x2="${f1(x)}" y1="${m.t}" y2="${bot}" stroke="#1e2a37"/><text x="${f1(x)}" y="${H - 8}" text-anchor="${t === s1 ? 'end' : 'middle'}" font-size="10.5" fill="#6b7f94">${durTick(t)}</text>`;
+    });
+    s += `<text x="0" y="14" font-size="11" font-weight="800" fill="#9db0c4">${o.met === 'sp' ? '↑ más rápido' : o.met === 'hr' ? 'ppm' : 'W'}</text>`;
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + f1(X(p[0])) + ' ' + f1(Y(p[1]))).join(' ');
+    s += `<path d="${d} L${f1(X(pts[pts.length - 1][0]))} ${bot} L${f1(X(pts[0][0]))} ${bot} Z" fill="${col}" fill-opacity=".10"/>`;
+    lines.slice().sort((a, b) => b.v - a.v).forEach((l, j) => {
+      const y = Y(l.v);
+      s += `<line x1="${m.l}" x2="${W - m.r}" y1="${f1(y)}" y2="${f1(y)}" stroke="${l.c}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+      s += `<text x="${m.l + 6}" y="${f1(j === 0 ? y - 5 : y + 13)}" font-size="10.5" font-weight="${l.strong ? 800 : 600}" fill="${l.strong ? '#eef4fb' : '#9db0c4'}">${esc(l.lab)}</text>`;
+    });
+    const q = pts[self.sel];
+    if (q) s += `<line x1="${f1(X(q[0]))}" x2="${f1(X(q[0]))}" y1="${m.t}" y2="${bot}" stroke="#9db0c4" stroke-width="1" opacity=".5"/>`;
+    s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const p20 = i20 >= 0 ? pts[i20] : null;
+    if ((p20 || o.st === 'sin_dato') && 1200 >= s0 && 1200 <= s1) {
+      const x = X(1200), tw = pinTxt.length * 6.2, cx = Math.min(Math.max(x, 96 + tw / 2), W - tw / 2 - 2);
+      s += `<line x1="${f1(x)}" x2="${f1(x)}" y1="19" y2="${f1(p20 ? Y(p20[1]) - 9 : bot)}" stroke="#ffd23f" stroke-width="1" stroke-dasharray="3 3"/>`;
+      s += `<text x="${f1(cx)}" y="14" text-anchor="middle" font-size="11" font-weight="800" fill="#eef4fb">${esc(pinTxt)}</text>`;
+    }
+    pts.forEach(p => { s += `<circle cx="${f1(X(p[0]))}" cy="${f1(Y(p[1]))}" r="4" fill="${col}" stroke="#121922" stroke-width="2"/>`; });
+    if (p20) s += `<circle cx="${f1(X(1200))}" cy="${f1(Y(p20[1]))}" r="8.5" fill="none" stroke="#ffd23f" stroke-width="2"/>`;
+    if (q) s += `<circle cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="6" fill="#eef4fb" stroke="${col}" stroke-width="2.5"/>`;
+    s += `<rect x="${m.l - 12}" y="0" width="${pw + 24}" height="${H}" fill="transparent"/>`;
+    host.innerHTML = s + '</svg>';
+  };
+  const set = (i, refocus) => {
+    if (i === self.sel) return; self.sel = i; self.draw();
+    if (refocus && host.firstElementChild) host.firstElementChild.focus({ preventScroll: true });
+    if (self.onSel) self.onSel(i);
+  };
+  const pick = ev => {
+    const svg = host.firstElementChild; if (!svg || !self.X) return;
+    const r = svg.getBoundingClientRect(); if (!r.width) return;
+    const x = (ev.clientX - r.left) * self.W / r.width;
+    let best = 0, bd = 1e9; pts.forEach((p, i) => { const dd = Math.abs(self.X(p[0]) - x); if (dd < bd) { bd = dd; best = i; } });
+    set(best, false);
+  };
+  host.addEventListener('pointerdown', ev => { try { host.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ } pick(ev); });
+  host.addEventListener('pointermove', ev => { if (ev.pointerType === 'mouse' || ev.buttons) pick(ev); });
+  host.addEventListener('keydown', ev => {
+    if (ev.key !== 'ArrowRight' && ev.key !== 'ArrowLeft') return;
+    ev.preventDefault(); set(Math.min(pts.length - 1, Math.max(0, self.sel + (ev.key === 'ArrowRight' ? 1 : -1))), true);
+  });
+  CHARTS.push(self);
+  return self;
+}
+
+/* ---------- normalización de cada métrica ---------- */
+function norm(sport, met, M) {
+  const prev = cleanZ(M.prev), next = cleanZ(M.new);
+  const tP = num(M.prev && M.prev.thr), tN = num(M.new && M.new.thr);
+  let st = STATES.indexOf(M.st) >= 0 ? M.st : null;
+  if (!st) st = tN > 0 ? (tP > 0 ? (tN > tP ? 'sube' : tN < tP ? 'baja' : 'igual') : 'sube') : 'sin_dato';
+  const changed = (st === 'sube' || st === 'baja' || st === 'igual') && (tN > 0 || !!next);
+  const tp = M.tp === 'escrito' || M.tp === 'propuesta' ? M.tp : null;
+  const src = M.new && M.new.src && typeof M.new.src === 'object' ? M.new.src : null;
+  return { sport, met, st, tp, prev, next, tP, tN, changed, src,
+    scheme: M.scheme ? String(M.scheme) : '', nota: M.nota ? String(M.nota) : '',
+    id: 'c-' + sport + '-' + met, k: tP > 0 && tN > 0 ? tN / tP : NaN,
+    pc: tP > 0 && tN > 0 ? (tN - tP) / tP * 100 : NaN };
+}
+const dirOf = pc => !isFinite(pc) ? 'flat' : pc > 0.005 ? 'up' : pc < -0.005 ? 'down' : 'flat';
+const arrOf = c => c === 'up' ? '▲' : c === 'down' ? '▼' : '=';
+function diffTxt(e) {
+  if (!(e.tP > 0 && e.tN > 0)) return '';
+  if (isPace(e.sport, e.met)) {
+    const per = perOf(e.sport), dt = per / e.tN - per / e.tP, a = Math.round(Math.abs(dt));
+    return a < 1 ? 'mismo ritmo' : a + ' s' + (e.sport === 'swim' ? '/100 m' : '/km') + (dt < 0 ? ' más rápido' : ' más lento');
+  }
+  if (e.met === 'sp') return sgn((e.tN - e.tP) * 3.6, 1) + ' km/h';
+  return sgn(e.tN - e.tP, 0) + (e.met === 'hr' ? ' ppm' : ' W');
+}
+
+/* ---------- textos del registro atleta (llano, metafórico, corto) ---------- */
+function metaphor(e) {
+  if (e.st === 'sin_dato') return 'Sin un esfuerzo continuo de 20 minutos no hay foto nueva. Tu mapa sigue vigente.';
+  if (e.st === 'artefacto') return 'Un número imposible no mueve tus zonas. Se queda fuera y tu mapa sigue como estaba.';
+  const c = dirOf(e.pc);
+  if (!(e.tP > 0)) return 'Primera foto de este umbral: desde aquí medimos tu progreso.';
+  if (c === 'up') {
+    if (e.met === 'pw') return 'Tu motor subió de marcha. Empujas más vatios en el umbral y tus zonas suben con él.';
+    if (e.met === 'hr') return 'Tu corazón aguanta más arriba. El techo de crucero subió y tus zonas suben con él.';
+    if (e.sport === 'swim') return 'El agua te deja pasar más rápido. Tu ritmo de crucero mejoró y tus zonas lo siguen.';
+    if (e.sport === 'bike') return 'Ruedas más rápido al mismo esfuerzo. Tus zonas se adelantan.';
+    return 'Encontraste otra marcha. Al mismo esfuerzo vas más rápido: tus zonas de ritmo se adelantan.';
+  }
+  if (c === 'down') return 'Hoy tu umbral marca un poco más abajo. No es un paso atrás: es el mapa honesto de tu momento, para que cada sesión caiga donde debe.';
+  return 'Tu umbral se sostiene. Mismo mapa, mismas zonas.';
+}
+
+/* ---------- constructores de HTML ---------- */
+let PENDING = [];
+let WIN = { txt: 'últimos 90 días', short: '90 días' };
+function tpWord(tp) { return tp === 'escrito' ? 'escrito (ya cargado)' : tp === 'propuesta' ? 'propuesta (pendiente de visto bueno)' : 'sin indicar'; }
+function rawV(e, x) { return e.met === 'sp' ? nf(x, 2) + ' m/s (' + fvs(e.sport, e.met, x) + ')' : fvs(e.sport, e.met, x); }
+
+function coachMetric(e) {
+  const nm = thrName(e.sport, e.met), u = e.met === 'sp' ? 'm/s' : e.met === 'hr' ? 'ppm' : 'W', dd = e.met === 'sp' ? 2 : 0;
+  const sch = '«' + esc(e.scheme || 'sin nombre') + '»';
+  const src = e.src ? 'Fuente: «' + esc(e.src.label || 'mejor 20′') + '» · ' + esc(fdate(e.src.date)) + (e.src.wid != null && e.src.wid !== '' ? ' · entreno ' + esc(e.src.wid) : '') + '.' : 'Fuente: no indicada en el enlace.';
+  let b;
+  if (e.changed && e.tN > 0 && e.tP > 0) {
+    b = `${esc(nm)} = media del mejor 20′ crudo en ${esc(WIN.txt)}.<br>${src}<br>` +
+      `<b>${esc(rawV(e, e.tP))} → ${esc(rawV(e, e.tN))}</b> · Δ ${esc(sgn(e.tN - e.tP, dd))} ${u} (${esc(sgn(e.pc, 2))}%) · ` +
+      `k = ${esc(nf(e.tN, dd))} / ${esc(nf(e.tP, dd))} = <b>${esc(nf(e.k, 4))}</b>.<br>` +
+      `Zonas = fronteras del esquema ${sch} × k${e.met === 'sp' ? ' (sobre la velocidad en m/s)' : ''}. TrainingPeaks: ${tpWord(e.tp)}.`;
+  } else if (e.changed && e.tN > 0) {
+    b = `${esc(nm)} = media del mejor 20′ crudo en ${esc(WIN.txt)}.<br>${src}<br>${esc(nm)} nuevo: <b>${esc(rawV(e, e.tN))}</b>. Sin umbral anterior en el enlace: no hay k que mostrar. Esquema ${sch}. TrainingPeaks: ${tpWord(e.tp)}.`;
+  } else if (e.st === 'artefacto') {
+    b = `Candidato descartado${e.tN > 0 ? ': <b>' + esc(rawV(e, e.tN)) + '</b>' + (e.tP > 0 ? ' (' + esc(sgn(e.pc, 1)) + '% frente al vigente)' : '') : ''}.${e.src ? ' ' + src : ''}<br>` +
+      `Motivo: ${esc(e.nota || 'sensor/GPS')}.<br>No se aplica k. Zonas vigentes: ${esc(nm)} ${e.tP > 0 ? '<b>' + esc(rawV(e, e.tP)) + '</b>' : '—'}, esquema ${sch}.`;
+  } else {
+    b = `Sin MM20 válido en ${esc(WIN.txt)}: no se recalcula ${esc(nm)}.<br>Se conservan las zonas vigentes: ${esc(nm)} ${e.tP > 0 ? '<b>' + esc(rawV(e, e.tP)) + '</b>' : '—'}, esquema ${sch}.` + (e.nota ? '<br>Nota: ' + esc(e.nota) : '');
+  }
+  return `<div class="coach-note"><span class="tag">Entrenador · ${esc(nm)}</span><span class="mono">${b}</span></div>`;
+}
+
+function zoneTable(e, names, both, main, tMain) {
+  if (!main) return '';
+  const ms = e.met === 'sp';
+  const head = '<tr><th>Zona</th>' + (both ? '<th>Antes</th><th>' + (e.tp === 'propuesta' ? 'Propuesta' : 'Ahora') + '</th>' : '<th>' + (e.changed ? 'Ahora' : 'Vigentes') + '</th>') +
+    '<th class="coach-only">% umbral</th>' + (both ? '<th class="coach-only"><span class="nu">× k</span></th>' : '') + '</tr>';
+  let rows = '';
+  main.forEach((z, i) => {
+    const pz = both ? e.prev[i] : null;
+    const msTxt = (q, nn, t) => ms ? `<span class="coach-only"><br><small>${esc(zms(e.met, q, i, nn, t, true))}</small></span>` : '';
+    rows += '<tr><td><b>' + esc(names[i]) + '</b></td>' +
+      (both ? '<td class="mono tag-old">' + (pz ? zcell(e.sport, e.met, pz, i, e.prev.length, e.tP) + msTxt(pz, e.prev.length, e.tP) : '—') + '</td>' : '') +
+      '<td class="mono">' + zcell(e.sport, e.met, z, i, main.length, tMain) + msTxt(z, main.length, tMain) + '</td>' +
+      '<td class="mono coach-only">' + esc(zpct(e.met, z, i, main.length, tMain)) + '</td>' +
+      (both ? '<td class="coach-only">' + (pz && e.k > 0 && e.prev.length === main.length ? kCheck(e.met, pz, z, e.k, i, main.length, e.tP, tMain) : '—') + '</td>' : '') + '</tr>';
+  });
+  const capK = (both && e.k > 0 ? `k = ${esc(nf(e.k, 4))} · cada frontera nueva = frontera anterior × k${ms ? ' (sobre la velocidad)' : ''}. ✓ = coincide al redondeo.` : '') + (ms ? ' Debajo de cada rango, la velocidad en m/s.' : '');
+  return `<details class="tv"><summary>Ver tus zonas en tabla · ${unitLab(e.sport, e.met)}</summary><div class="t-scroll"><table>${head}${rows}</table></div>${capK ? `<p class="cap coach-only">${capK.trim()}</p>` : ''}</details>`;
+}
+
+function metricCard(e, span) {
+  const S = SP[e.sport], Mt = MT[e.met], pace = isPace(e.sport, e.met);
+  const both = !!(e.changed && e.next && e.prev);
+  const main = e.changed && e.next ? e.next : e.prev;
+  const tMain = e.changed && e.next ? e.tN : e.tP;
+  const names = zoneNames(main ? main.length : 0, e.scheme);
+  const fN = fv(e.sport, e.met, e.tN), fP = fv(e.sport, e.met, e.tP);
+  let thr = '', badges = '', callout = '';
+  if (e.changed && e.tN > 0) {
+    if (e.tP > 0) {
+      const c = dirOf(e.pc);
+      thr = `<div class="thr"><span class="o">${esc(fP.v)}</span><span class="ar">→</span><span class="n">${esc(fN.v)}</span><span class="u">${esc(fN.u)}</span>` +
+        `<span class="delta ${c}">${arrOf(c)} ${c === 'flat' ? 'sin cambio' : esc(sgn(e.pc, 1)) + '% · ' + esc(diffTxt(e))}</span></div>`;
+    } else {
+      thr = `<div class="thr"><span class="n">${esc(fN.v)}</span><span class="u">${esc(fN.u)}</span><span class="delta flat">primera calibración</span></div>`;
+    }
+    if (e.tp === 'escrito') badges += '<span class="badge b-ok">✓ Ya en tu TrainingPeaks</span>';
+    else if (e.tp === 'propuesta') badges += '<span class="badge b-hi bw">◆ Propuesta: pendiente de visto bueno de tu entrenador</span>';
+    if (e.nota) callout = `<p class="note-s">${esc(e.nota)}</p>`;
+  } else {
+    if (e.tP > 0) thr = `<div class="thr"><span class="n">${esc(fP.v)}</span><span class="u">${esc(fP.u)}</span><span class="delta flat">= se mantiene</span></div>`;
+    if (e.st === 'artefacto') {
+      badges = '<span class="badge b-hi">⚠ Dato descartado</span>';
+      callout = `<div class="callout warn"><h4>Dato descartado por sensor/GPS</h4>${e.nota ? `<p class="note-s">${esc(e.nota)}</p>` : ''}</div>`;
+    } else {
+      badges = '<span class="badge b-off">Sin dato suficiente</span>';
+      callout = `<div class="callout"><h4>Sin dato suficiente en 90 días: se mantienen tus zonas</h4>${e.nota ? `<p class="note-s">${esc(e.nota)}</p>` : ''}</div>`;
+    }
+  }
+  let viz = '';
+  if (main) {
+    PENDING.push({ kind: 'ribbon', e, names, both, main, tMain });
+    viz = `<div class="viz" id="v-${e.id}"></div><div class="zleg" id="l-${e.id}" aria-label="Zonas"></div>` +
+      `<div class="readout" id="o-${e.id}" aria-live="polite"></div>` +
+      `<div class="dir"><span>← ${pace ? 'más lento' : 'más bajo'}</span><span>${pace ? 'más rápido' : 'más alto'} →</span></div>`;
+  } else {
+    viz = '<p class="note-s">No hay zonas registradas para esta métrica.</p>';
+  }
+  return `<article class="card${span ? ' span2' : ''}" id="${e.id}">` +
+    `<div class="zc-h"><span class="pill ${e.sport}">${S.pill}</span><h3>${Mt.name}</h3></div>` +
+    thr + (badges ? `<div class="badges">${badges}</div>` : '') + callout + viz +
+    `<div class="athlete-note">${esc(metaphor(e))}</div>` + coachMetric(e) +
+    zoneTable(e, names, both, main, tMain) + '</article>';
+}
+
+function cleanPts(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(p => Array.isArray(p) && isPos(num(p[0])) && isPos(num(p[1])))
+    .map(p => [num(p[0]), num(p[1]), p[2] == null ? '' : String(p[2])]).sort((a, b) => a[0] - b[0]);
+}
+function curveCard(sport, S, entries) {
+  const C = S.c && typeof S.c === 'object' ? S.c : {};
+  const mets = PREF[sport].filter(k => cleanPts(C[k]).length >= 2);
+  if (!mets.length) return '';
+  const sw = mets.length > 1 ? `<div class="toggle seg" role="group" aria-label="Métrica de la curva">` +
+    mets.map((k, i) => `<button type="button" class="${i ? '' : 'on'}" data-k="${k}" aria-pressed="${i ? 'false' : 'true'}">${MT[k].short}</button>`).join('') + '</div>' : '';
+  let blocks = '';
+  mets.forEach((k, i) => {
+    const e = entries.find(x => x.met === k) || null, pts = cleanPts(C[k]), id = 'k-' + sport + '-' + k;
+    const showNew = !!(e && e.changed && e.tN > 0);
+    PENDING.push({ kind: 'curve', id, sport, met: k, pts, e, showNew });
+    const p20 = pts.find(p => p[0] === 1200);
+    let an = 'Cada punto es tu mejor marca en 90 días: a la izquierda los arranques cortos, a la derecha el fondo.';
+    if (e && e.st === 'artefacto') an += ' El aro amarillo marca un dato que se descartó: no mueve tus zonas.';
+    else if (!p20) an += ' Aún no hay un bloque de 20 minutos en la ventana: por eso tus zonas se mantienen.';
+    else if (showNew) an += ' El aro amarillo, tu mejor bloque de 20 minutos, es el que fija tu umbral.';
+    else an += ' El aro amarillo marca tu mejor bloque de 20 minutos.';
+    const nm = thrName(sport, k);
+    let cn = `Curva mean-max ${esc(WIN.txt)} · ${pts.length} duraciones (${esc(durLab(pts[0][0]))} → ${esc(durLab(pts[pts.length - 1][0]))}).<br>`;
+    cn += p20 ? `MM20 = <b>${esc(k === 'sp' ? nf(p20[1], 2) + ' m/s (' + fvs(sport, k, p20[1]) + ')' : fvs(sport, k, p20[1]))}</b> · ${esc(fdate(p20[2]))}.` : 'Sin punto de 20′ en la ventana.';
+    if (e && showNew) cn += `<br>${esc(nm)} nuevo = ${esc(rawV(e, e.tN))}${e.tP > 0 ? ' · anterior = ' + esc(rawV(e, e.tP)) + ' · k = ' + esc(nf(e.k, 4)) : ''}.`;
+    else if (e && e.tP > 0) cn += `<br>${esc(nm)} vigente = ${esc(rawV(e, e.tP))} (${e.st === 'artefacto' ? 'MM20 descartado' : 'se conserva'}).`;
+    let rows = '';
+    pts.forEach(p => {
+      rows += `<tr><td class="mono">${esc(durLab(p[0]))}</td><td class="mono"><b>${esc(fvs(sport, k, p[1]))}</b></td><td class="mono">${esc(fdate(p[2]))}</td>` +
+        (k === 'sp' ? `<td class="mono coach-only">${esc(nf(p[1], 2))}</td>` : '') + '</tr>';
+    });
+    const tbl = `<details class="tv"><summary>Ver la curva en números</summary><div class="t-scroll"><table><tr><th>Duración</th><th>Mejor marca</th><th>Fecha</th>${k === 'sp' ? '<th class="coach-only"><span class="nu">m/s</span></th>' : ''}</tr>${rows}</table></div></details>`;
+    const leg = `<div class="legend">${showNew ? '<span><i class="ln"></i>umbral nuevo</span>' : ''}${e && e.tP > 0 && !(showNew && Math.abs(e.tP - e.tN) < 1e-9) ? '<span><i class="ln old"></i>' + (showNew ? 'umbral anterior' : 'umbral vigente') + '</span>' : ''}${p20 ? '<span><i class="ring"></i>tu mejor 20′</span>' : ''}</div>`;
+    blocks += `<div class="cblk" data-k="${k}"${i ? ' hidden' : ''}><div class="viz" id="v-${id}"></div><div class="readout" id="o-${id}" aria-live="polite"></div>${leg}` +
+      `<div class="athlete-note">${esc(an)}</div><div class="coach-note"><span class="tag">Entrenador · curva ${esc(MT[k].short)}</span><span class="mono">${cn}</span></div>${tbl}</div>`;
+  });
+  return `<div class="card span2" id="curva-${sport}"><div class="curve-h"><h3>Tu curva de rendimiento · ${esc(S2(sport))}</h3>${sw}</div>${blocks}</div>`;
+}
+const S2 = sport => SP[sport].de;
+
+function tile(e) {
+  const showN = e.changed && e.tN > 0, v = fv(e.sport, e.met, showN ? e.tN : e.tP);
+  const tpT = e.tp === 'escrito' ? ' · en TP' : e.tp === 'propuesta' ? ' · propuesta' : '';
+  let d;
+  if (showN && e.tP > 0) { const c = dirOf(e.pc); d = `<div class="delta ${c}">${arrOf(c)} ${c === 'flat' ? 'igual' : esc(sgn(e.pc, 1)) + '%'}${tpT}</div>`; }
+  else if (showN) d = `<div class="delta flat">nuevo${tpT}</div>`;
+  else if (e.st === 'artefacto') d = '<div class="delta wrn">⚠ descartado · se mantiene</div>';
+  else d = '<div class="delta flat">sin dato · se mantiene</div>';
+  return `<button type="button" class="stat" data-go="${e.id}"><div class="lab"><i class="sw ${e.sport}"></i>${SP[e.sport].acto} · ${MT[e.met].short}</div>` +
+    `<div class="val mono">${esc(v.v)}<small> ${esc(v.u)}</small></div>${d}</button>`;
+}
+
+function cozSection(coz) {
+  const items = (Array.isArray(coz.items) ? coz.items : []).filter(it => it && typeof it === 'object' && SP[it.dep] && MT[it.met] && isPos(num(it.dur)))
+    .map(it => ({ dep: it.dep, met: it.met, dur: num(it.dur), val: num(it.val), prev: num(it.prev), prevDate: it.prevDate, inc: it.estado === 'incompleto', motivo: it.motivo ? String(it.motivo) : '' }))
+    .sort((a, b) => SP_ORDER.indexOf(a.dep) - SP_ORDER.indexOf(b.dep) || PREF[a.dep].indexOf(a.met) - PREF[b.dep].indexOf(b.met) || a.dur - b.dur);
+  if (!items.length) return '';
+  const cmp = it => !it.inc && isPos(it.val) && isPos(it.prev);
+  const ok = items.filter(cmp), inc = items.filter(it => it.inc);
+  const best = ok.filter(it => it.met !== 'hr' && it.val > it.prev);
+  let cards = '', rows = '';
+  items.forEach(it => {
+    const head = `<span class="pill ${it.dep}">${SP[it.dep].pill}</span><b>${MT[it.met].name} · ${esc(durLab(it.dur))}</b>`;
+    if (!cmp(it)) {
+      const lab = it.inc ? 'archivo incompleto: no se compara' : 'sin dato para comparar';
+      cards += `<div class="ci inc"><div class="ci-h">${head}</div><span class="badge b-off bw">${lab}</span><div class="track hatch" role="img" aria-label="${lab}"></div>${it.motivo ? `<p class="note-s">Motivo: ${esc(it.motivo)}</p>` : ''}</div>`;
+      rows += `<tr><td>${SP[it.dep].acto} · ${MT[it.met].short}<br><small>${esc(durLab(it.dur))}</small></td><td colspan="3" class="tag-old">${lab}${it.motivo ? '<br><small>' + esc(it.motivo) + '</small>' : ''}</td></tr>`;
+      return;
+    }
+    const pc = (it.val / it.prev - 1) * 100, c = it.met === 'hr' ? 'flat' : dirOf(pc), ar = arrOf(dirOf(pc));
+    const star = it.met !== 'hr' && it.val > it.prev ? ' ★' : '';
+    const mx = Math.max(it.val, it.prev), a = fv(it.dep, it.met, it.val), b = fv(it.dep, it.met, it.prev);
+    let extra = '';
+    if (isPace(it.dep, it.met)) { const per = perOf(it.dep), dt = Math.round(per / it.val - per / it.prev); extra = Math.abs(dt) >= 1 ? ' · ' + Math.abs(dt) + ' s' + (it.dep === 'swim' ? '/100 m' : '/km') + (dt < 0 ? ' más rápido' : ' más lento') : ''; }
+    cards += `<div class="ci"><div class="ci-h">${head}<span class="delta ${c}">${ar} ${esc(sgn(pc, 1))}%${star}</span></div>` +
+      `<div class="br"><span>Cozumel</span><b>${esc(a.v)} ${esc(a.u)}</b></div><div class="track" role="img" aria-label="Cozumel ${esc(a.v + ' ' + a.u)}"><i style="width:${(it.val / mx * 100).toFixed(1)}%;background:var(--${it.dep})"></i></div>` +
+      `<div class="br"><span>Mejor previo · ${esc(fdate(it.prevDate, false))}</span><b>${esc(b.v)} ${esc(b.u)}</b></div><div class="track" role="img" aria-label="Mejor previo ${esc(b.v + ' ' + b.u)}"><i style="width:${(it.prev / mx * 100).toFixed(1)}%;background:#86919c"></i></div>` +
+      (star ? '<p class="note-s">★ Nueva mejor marca en esta duración.</p>' : extra ? `<p class="note-s">${esc(extra.slice(3))}</p>` : '') + '</div>';
+    const msv = x => it.met === 'sp' ? '<br><small>' + esc(nf(x, 2)) + ' m/s</small>' : '';
+    rows += `<tr><td>${SP[it.dep].acto} · ${MT[it.met].short}<br><small>${esc(durLab(it.dur))}</small></td>` +
+      `<td class="mono"><b>${esc(fvs(it.dep, it.met, it.val))}</b>${msv(it.val)}</td>` +
+      `<td class="mono">${esc(fvs(it.dep, it.met, it.prev))}${msv(it.prev)}<br><small>${esc(fdate(it.prevDate))}</small></td>` +
+      `<td class="mono">${esc(sgn(pc, 2))}%<br><small>×${esc(nf(it.val / it.prev, 3))}</small></td></tr>`;
+  });
+  let an = `De ${items.length} comparaciones, ${ok.length} se pueden leer`;
+  an += best.length ? `. En ${best.length} superaste tu mejor marca previa ★.` : '.';
+  an += ' En un Ironman se va con el freno de mano puesto a propósito: aquí ves cuánto de tu mejor historia llevaste a cada hora.';
+  const cn = `Comparación: valor en carrera vs mejor marca previa a la carrera en la misma duración (mean-max). Δ% = carrera / previo − 1. ` +
+    `Los ítems «incompleto» (${inc.length}) no se comparan.` +
+    `<div class="t-scroll" style="margin-top:8px"><table><tr><th>Ítem</th><th>Cozumel</th><th>Mejor previo</th><th>Δ</th></tr>${rows}</table></div>`;
+  return `<section id="coz"><div class="sec-h"><span class="acto">Cozumel</span><h2>Tu Ironman Cozumel frente a tu historia</h2></div>` +
+    `<p class="lede"><b style="color:var(--ink)">${esc(coz.race || 'IRONMAN Cozumel')}</b> · lo que hiciste el día de la carrera, junto a tu mejor marca de los meses anteriores en la misma duración.</p>` +
+    `<div class="grid g3">${cards}</div><div class="athlete-note" style="margin-top:14px">${esc(an)}</div>` +
+    `<div class="coach-note"><span class="tag">Entrenador · comparación de carrera</span><span class="mono">${cn}</span></div></section>`;
+}
+
+function methodSection() {
+  const r = ramp('m4t', 5), o = ramp('old', 5);
+  const ta = [8, 36, 62, 86, 108, 132], tb = [8, 41, 69, 95, 117, 132];
+  let rib = '';
+  for (let i = 0; i < 5; i++) {
+    rib += `<rect x="${ta[i] + (i ? 1 : 0)}" y="8" width="${ta[i + 1] - ta[i] - (i ? 1 : 0) - (i < 4 ? 1 : 0)}" height="13" rx="3" fill="${o[i].c}"/>`;
+    rib += `<rect x="${tb[i] + (i ? 1 : 0)}" y="43" width="${tb[i + 1] - tb[i] - (i ? 1 : 0) - (i < 4 ? 1 : 0)}" height="13" rx="3" fill="${r[i].c}"/>`;
+    if (i) rib += `<line x1="${ta[i]}" y1="22" x2="${tb[i]}" y2="42" stroke="#3a4d63"/>`;
+  }
+  const svg1 = '<svg width="140" height="64" viewBox="0 0 140 64" aria-hidden="true"><line x1="8" y1="58" x2="132" y2="58" stroke="#1e2a37"/><path d="M8 8 C 30 12, 52 28, 82 34 S 120 48, 132 52" fill="none" stroke="#9db0c4" stroke-width="2"/><line x1="82" y1="4" x2="82" y2="26" stroke="#ffd23f" stroke-dasharray="3 3"/><circle cx="82" cy="34" r="7" fill="none" stroke="#ffd23f" stroke-width="2"/><circle cx="82" cy="34" r="3" fill="#ffd23f"/></svg>';
+  const svg2 = '<svg width="140" height="64" viewBox="0 0 140 64" aria-hidden="true"><path d="M22 58 A48 48 0 0 1 118 58" fill="none" stroke="#1e2a37" stroke-width="9" stroke-linecap="round"/><path d="M22 58 A48 48 0 0 1 98 21" fill="none" stroke="#ffd23f" stroke-width="9" stroke-linecap="round"/><line x1="70" y1="58" x2="96" y2="25" stroke="#eef4fb" stroke-width="3" stroke-linecap="round"/><circle cx="70" cy="58" r="5" fill="#eef4fb"/></svg>';
+  const svg3 = `<svg width="140" height="64" viewBox="0 0 140 64" aria-hidden="true">${rib}</svg>`;
+  return `<section id="metodo"><div class="sec-h"><span class="acto">Método</span><h2>Cómo se calculan tus zonas</h2></div>` +
+    `<div class="steps">` +
+    `<div class="card tight step">${svg1}<div class="num">Paso 1</div><p>Buscamos tu mejor bloque de 20 minutos de los últimos 90 días.</p></div>` +
+    `<div class="card tight step">${svg2}<div class="num">Paso 2</div><p>Ese promedio es tu nuevo umbral: el esfuerzo más alto que sostienes sin quemarte.</p></div>` +
+    `<div class="card tight step">${svg3}<div class="num">Paso 3</div><p>Todas tus zonas se mueven en la misma proporción. Sin dato no se inventa nada: se quedan como estaban.</p></div>` +
+    `</div><div class="coach-note"><span class="tag">Entrenador · fórmula</span><div class="formula">` +
+    `umbral<sub>nuevo</sub> = media del mejor bloque de 20′ (crudo) en la ventana ${esc(WIN.txt)}<br>` +
+    `k = umbral<sub>nuevo</sub> / umbral<sub>anterior</sub><br>` +
+    `frontera<sub>i,nueva</sub> = frontera<sub>i,anterior</sub> × k (el esquema conserva sus proporciones)<br>` +
+    `ritmo: k se aplica a la velocidad (m/s) · carrera min/km = 1000 / v · natación min/100 m = 100 / v<br>` +
+    `sin dato: no hay MM20 válido en la ventana → se conservan las zonas · artefacto: valor de sensor/GPS → se descarta<br>` +
+    `TrainingPeaks: «escrito» = ya cargado · «propuesta» = pendiente de visto bueno` +
+    `</div></div></section>`;
+}
+
+/* ---------- render principal ---------- */
+function render(D) {
+  PENDING = []; CHARTS.length = 0;
+  const name = String(D.n || 'Atleta');
+  document.title = 'Zonas · ' + name + ' · Made For Try';
+  const w = Array.isArray(D.w) ? D.w : [];
+  if (ymd(w[0]) && ymd(w[1])) {
+    const sameY = ymd(w[0])[0] === ymd(w[1])[0], nd = ndays(w[0], w[1]) + 1;
+    WIN = { txt: fdate(w[0], !sameY) + ' → ' + fdate(w[1]) + ' (' + nd + ' d)', short: nd + ' días' };
+  } else WIN = { txt: 'últimos 90 días', short: '90 días' };
+  const sports = SP_ORDER.filter(s => D.d[s] && typeof D.d[s] === 'object');
+  const entries = [];
+  sports.forEach(s => { const m = D.d[s].m && typeof D.d[s].m === 'object' ? D.d[s].m : {}; PREF[s].forEach(k => { if (m[k] && typeof m[k] === 'object') entries.push(norm(s, k, m[k])); }); });
+  const ch = entries.filter(e => e.changed && e.tP > 0 && e.tN > 0);
+  const ups = ch.filter(e => dirOf(e.pc) === 'up').length, downs = ch.filter(e => dirOf(e.pc) === 'down').length;
+  const same = entries.filter(e => (e.changed && dirOf(e.pc) === 'flat') || e.st === 'sin_dato').length, art = entries.filter(e => e.st === 'artefacto').length;
+  const um = n => n === 1 ? '1 umbral' : n + ' umbrales';
+  let head;
+  if (ups && downs) head = `Tu mapa se reajusta: <b>${um(ups)}</b> ${ups === 1 ? 'sube' : 'suben'} y <b>${downs}</b> ${downs === 1 ? 'baja' : 'bajan'}.`;
+  else if (ups) head = `Tu motor subió de marcha: <b>${um(ups)}</b> ${ups === 1 ? 'sube' : 'suben'}.`;
+  else if (downs) head = `Tu mapa se ajusta a tu momento: <b>${um(downs)}</b> ${downs === 1 ? 'baja' : 'bajan'}.`;
+  else head = 'Tus zonas se mantienen: tu mapa sigue vigente.';
+
+  let h = `<div class="hero"><div class="kicker">Zonas de entrenamiento · ${esc(fdate(D.f))}</div><h1>${esc(name)}</h1><div class="sub">${head}</div>` +
+    `<div class="meta">${D.g ? `<span>Grupo <b>${esc(D.g)}</b></span>` : ''}<span>Ventana <b>${esc(WIN.txt.replace(/ \(\d+ d\)$/, ''))}</b> · ${esc(WIN.short)}</span><span class="hint">◆ Toca una zona o un punto para ver sus números</span></div></div>`;
+
+  if (entries.length) {
+    const cnt = [];
+    if (ups) cnt.push(`<span class="cnt up">▲ ${ups} ${ups === 1 ? 'sube' : 'suben'}</span>`);
+    if (downs) cnt.push(`<span class="cnt down">▼ ${downs} ${downs === 1 ? 'baja' : 'bajan'}</span>`);
+    if (same) cnt.push(`<span class="cnt flat">= ${same} se ${same === 1 ? 'mantiene' : 'mantienen'}</span>`);
+    if (art) cnt.push(`<span class="cnt wrn">⚠ ${art} ${art === 1 ? 'dato descartado' : 'datos descartados'}</span>`);
+    const nTP = entries.filter(e => e.changed && e.tp === 'escrito').length, nPr = entries.filter(e => e.changed && e.tp === 'propuesta').length;
+    h += `<section id="resumen"><div class="sec-h"><span class="acto">Resumen</span><h2>Tus umbrales en una pantalla</h2></div>` +
+      `<div class="counts">${cnt.join('')}</div><div class="tiles">${entries.map(tile).join('')}</div>` +
+      `<div class="athlete-note" style="margin-top:14px">Tus zonas son el mapa de tus entrenos. ${ups ? 'Donde subiste, el mapa se estira hacia arriba. ' : ''}Toca una tarjeta para ver sus zonas.</div>` +
+      `<div class="coach-note"><span class="tag">Entrenador · resumen</span><span class="mono">Ventana mean-max: <b>${esc(WIN.txt)}</b>. Umbral = media del mejor 20′ crudo (MM20); zonas = fronteras del esquema × k, k = nuevo / anterior.<br>` +
+      `Métricas: ${entries.length} · suben ${ups} · bajan ${downs} · iguales/sin dato ${same} · artefactos ${art} · escritas en TP ${nTP} · propuestas ${nPr}.</span></div></section>`;
+  } else {
+    h += '<div class="callout"><h4>Este enlace no trae zonas para mostrar.</h4></div>';
+  }
+
+  sports.forEach(s => {
+    const es = entries.filter(e => e.sport === s), S = D.d[s];
+    const anyCh = es.some(e => e.changed && e.prev && e.next);
+    const curve = curveCard(s, S, es);
+    if (!es.length && !curve) return;
+    h += `<section id="s-${s}"><div class="sec-h"><span class="acto">${SP[s].acto}</span><h2>Tus zonas de ${SP[s].de}</h2></div>` +
+      `<p class="lede">${anyCh ? 'Antes en gris, ahora en color. Toca una zona para ver su rango.' : 'Tus zonas vigentes. Toca una zona para ver su rango.'}</p>` +
+      `<div class="grid g2">${es.map((e, i) => metricCard(e, es.length % 2 === 1 && i === es.length - 1)).join('')}${curve}</div></section>`;
+  });
+  if (D.coz && typeof D.coz === 'object') h += cozSection(D.coz);
+  h += methodSection();
+  app.innerHTML = h;
+
+  const coach = document.body.classList.contains('coach');
+  app.querySelectorAll('details.tv').forEach(d => { d.open = coach; });
+  PENDING.forEach(p => { if (p.kind === 'ribbon') mountRibbon(p); else mountCurve(p); });
+
+  const navs = [['resumen', 'Resumen']].concat(sports.filter(s => document.getElementById('s-' + s)).map(s => ['s-' + s, SP[s].acto]));
+  if (document.getElementById('coz')) navs.push(['coz', 'Cozumel']);
+  navs.push(['metodo', 'Método']);
+  navEl.innerHTML = navs.filter(x => document.getElementById(x[0])).map(x => `<button type="button" data-go="${x[0]}">${x[1]}</button>`).join('');
+  footMeta.textContent = 'Zonas · ' + name + ' · ventana ' + WIN.txt + (ymd(D.f) ? ' · generado ' + fdate(D.f) : '');
+}
+
+function mountRibbon(p) {
+  const e = p.e, host = document.getElementById('v-' + e.id), leg = document.getElementById('l-' + e.id), out = document.getElementById('o-' + e.id);
+  if (!host) return;
+  const main = p.main, tMain = p.tMain, n = main.length;
+  let sel = 0; main.forEach((z, i) => { if (tMain > 0 && z[0] <= tMain) sel = i; });
+  const labB = p.both ? (e.tp === 'propuesta' ? 'PROPUESTA' : 'AHORA') : (e.changed ? 'AHORA' : 'SE MANTIENEN');
+  const R = Ribbon(host, { sport: e.sport, met: e.met, A: p.both ? e.prev : null, B: main, tA: p.both ? e.tP : NaN, tB: tMain, names: p.names, labA: 'ANTES', labB, sel,
+    aria: `Zonas de ${MT[e.met].name.toLowerCase()} de ${SP[e.sport].de}` + (p.both ? `: antes umbral ${fvs(e.sport, e.met, e.tP)}, ahora ${fvs(e.sport, e.met, e.tN)}` : '') });
+  const colors = ramp(e.sport, n);
+  leg.innerHTML = p.names.map((nm, i) => `<button type="button" data-i="${i}" aria-label="Zona ${esc(nm)}"><i style="background:${colors[i].c}"></i>${esc(nm)}</button>`).join('');
+  const readout = i => {
+    const z = main[i], pz = p.both ? e.prev[i] : null, pace = isPace(e.sport, e.met);
+    const nw = t => `<span class="nw">${esc(t)}</span>`;
+    let s = `<b>${esc(p.names[i])}</b> · `;
+    if (p.both) s += `${labB === 'PROPUESTA' ? 'propuesta' : 'ahora'} <b>${nw(zr(e.sport, e.met, z, i, n, tMain))}</b>` + (pz ? ` · antes ${nw(zr(e.sport, e.met, pz, i, e.prev.length, e.tP))}` : '');
+    else s += `<b>${nw(zr(e.sport, e.met, z, i, n, tMain))}</b>`;
+    s += `<span class="coach-only"> · ${nw(zpct(e.met, z, i, n, tMain))} del umbral${e.met === 'sp' ? ' · ' + nw(zms(e.met, z, i, n, tMain)) : ''}</span>`;
+    return s;
+  };
+  const sync = i => { [...leg.children].forEach((b, j) => { b.classList.toggle('on', j === i); b.setAttribute('aria-pressed', j === i ? 'true' : 'false'); }); out.innerHTML = readout(i); };
+  R.onSel = sync;
+  leg.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; const i = +b.dataset.i; R.sel = i; R.draw(); sync(i); });
+  leg.addEventListener('focusin', ev => { const b = ev.target.closest('button'); if (!b) return; const i = +b.dataset.i; if (i !== R.sel) { R.sel = i; R.draw(); sync(i); } });
+  R.draw(); sync(sel);
+}
+
+function mountCurve(p) {
+  const host = document.getElementById('v-' + p.id), out = document.getElementById('o-' + p.id); if (!host) return;
+  const e = p.e;
+  const C = Curve(host, { sport: p.sport, met: p.met, pts: p.pts, st: e ? e.st : '', tN: e ? e.tN : NaN, tP: e ? e.tP : NaN, showNew: p.showNew,
+    aria: `Curva de rendimiento de ${SP[p.sport].de}, ${MT[p.met].name.toLowerCase()}, ${p.pts.length} duraciones` });
+  const readout = i => {
+    const q = p.pts[i], v = fv(p.sport, p.met, q[1]);
+    return `<b>${esc(v.v)} ${esc(v.u)}</b> · mejor marca en ${esc(durLab(q[0]))} · ${esc(fdate(q[2]))}` +
+      `<span class="coach-only"> · t = ${esc(nf(q[0]))} s${p.met === 'sp' ? ' · v = ' + esc(nf(q[1], 2)) + ' m/s' : ''}</span>`;
+  };
+  C.onSel = i => { out.innerHTML = readout(i); };
+  C.block = host.closest('.cblk');
+  C.draw(); out.innerHTML = readout(C.sel);
+}
+
+/* ---------- mensajes de enlace incompleto ---------- */
+function showMsg(err) {
+  CHARTS.length = 0; navEl.innerHTML = ''; footMeta.textContent = '';
+  document.title = 'Enlace incompleto · Made For Try';
+  app.innerHTML = `<div class="hero"><div class="kicker">Zonas de entrenamiento</div><h1>Enlace incompleto</h1>` +
+    `<div class="sub">No pudimos abrir tus zonas con este enlace.</div></div>` +
+    `<div class="callout danger"><h4>Enlace incompleto: pide a tu entrenador que te lo reenvíe.</h4>` +
+    `<p class="note-s">Suele pasar cuando el mensaje corta el enlace o falta la parte final (después de <span class="mono">#z=</span>).</p></div>` +
+    `<div class="coach-note"><span class="tag">Entrenador · diagnóstico</span><span class="mono">${esc(err ? String(err.message || err) : 'el enlace no trae el fragmento #z=')}</span></div>`;
+}
+
+/* ---------- arranque ---------- */
+let lastZ = null;
+async function boot() {
+  const z = getZ(); lastZ = z;
+  if (!z) { showMsg(null); return; }
+  let data;
+  try { data = await decodeZ(z); } catch (err) { showMsg(err); return; }
+  try { render(data); } catch (err) { showMsg(err); }
+}
+window.addEventListener('hashchange', () => { const z = getZ(); if (z && z !== lastZ) boot(); });
+
+/* navegación interna sin tocar el fragmento (el fragmento lleva los datos) */
+document.addEventListener('click', ev => {
+  const g = ev.target.closest('[data-go]'); if (!g) return;
+  const el = document.getElementById(g.dataset.go); if (!el) return;
+  ev.preventDefault();
+  const hh = document.querySelector('header').offsetHeight;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - hh - 10, behavior: reduce ? 'auto' : 'smooth' });
+});
+/* selector de métrica de la curva */
+app.addEventListener('click', ev => {
+  const b = ev.target.closest('.seg button'); if (!b) return;
+  const seg = b.parentElement, card = seg.closest('.card');
+  [...seg.children].forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+  card.querySelectorAll('.cblk').forEach(bl => { bl.hidden = bl.dataset.k !== b.dataset.k; });
+  CHARTS.forEach(c => { if (c.block && !c.block.hidden) c.draw(); });
+});
+/* redibujar a la medida real del contenedor (texto SVG siempre a su tamaño real) */
+let lastW = 0, rq = 0;
+window.addEventListener('resize', () => {
+  if (rq) return;
+  rq = requestAnimationFrame(() => { rq = 0; const w = document.documentElement.clientWidth; if (w === lastW) return; lastW = w; CHARTS.forEach(c => c.draw()); });
+});
+lastW = document.documentElement.clientWidth;
+boot();
+})();
+</script>
+</body>
+</html>
