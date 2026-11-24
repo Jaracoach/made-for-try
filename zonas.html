@@ -171,6 +171,12 @@ button.stat:focus-visible{outline:2px solid var(--m4t);outline-offset:2px}
 .zleg button i{display:inline-block;width:10px;height:10px;border-radius:3px}
 .zleg button.on{border-color:var(--ink2);color:var(--ink);background:var(--card2)}
 .zleg button:focus-visible{outline:2px solid var(--m4t);outline-offset:1px}
+.zrow{display:flex;flex-wrap:wrap;gap:5px;align-items:center;width:100%}
+.zrow .zl{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);min-width:64px}
+/* halo: el texto del SVG se lee aunque la curva o un punto pase por debajo */
+.viz svg text.halo{paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.nota{color:var(--ink2)}
+.nota::before{content:"◆ ";color:var(--m4t2)}
 .readout{margin-top:10px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px;color:var(--ink2);min-height:40px}
 .readout b{color:var(--ink);font-weight:800}
 .nw{white-space:nowrap}
@@ -381,7 +387,7 @@ function zms(m, z, i, n, t, bare) {
 /* comprobación «nuevo = anterior × k» frontera a frontera (centinelas y ceros aparte) */
 function kCheck(m, pz, z, k, i, n, tP, tN) {
   const ep = zEnds(m, pz, i, n, tP), en = zEnds(m, z, i, n, tN);
-  const near = (a, b) => m === 'sp' ? Math.abs(a - b) <= Math.abs(b) * 0.006 + 1e-9 : Math.abs(a - b) <= 1.01;
+  const near = (a, b) => Math.abs(a - b) <= (m === 'sp' ? 0.0002 : 1) + 1e-9;
   let ok = true; const exp = [];
   if (!ep.lo && !en.lo) { ok = ok && near(z[0], pz[0] * k); exp.push(pz[0] * k); }
   if (!ep.hi && !en.hi) { ok = ok && near(z[1], pz[1] * k); exp.push(pz[1] * k); }
@@ -526,9 +532,11 @@ async function decodeZ(raw) {
 let UID = 0;
 const CHARTS = [];
 function Ribbon(host, o) {
-  /* o: {sport, met, A (zonas antes|null), B (zonas principales), tA, tB, names, labA, labB, sel, aria} */
+  /* o: {sport, met, A (zonas «antes»|null), B (zonas principales), tA, tB, namesA, namesB, labA, labB,
+        paired (mismo número de zonas → se empareja por índice), sel {bar:'a'|'b', i}, aria}
+     Sin emparejar (p. ej. 6 zonas antes y 5 ahora) cada barra se selecciona y se lee por separado. */
   const self = { sel: o.sel, onSel: null };
-  const uid = ++UID, A = o.A, B = o.B, both = !!A;
+  const uid = ++UID, A = o.A, B = o.B, both = !!A, paired = both && !!o.paired;
   let lo = Infinity, hi = -Infinity, oL = false, oH = false;
   [[A, o.tA], [B, o.tB]].forEach(([z, t]) => {
     if (!z) return; const k = z.length, eL = openLo(z[0][0], z[0][1]), eH = openHi(o.met, z[k - 1][0], z[k - 1][1], t);
@@ -548,23 +556,23 @@ function Ribbon(host, o) {
     const fl = a <= lo, fr = b >= hi; a = Math.max(a, lo); b = Math.min(b, hi);
     return { i, x0: X(a), x1: X(Math.max(a, b)), fl, fr };
   });
-  function bar(g, col, y, W) {
+  const isSel = (key, i) => self.sel.i === i && (paired || self.sel.bar === key);
+  function bar(g, col, y, names, key) {
     let s = ''; const k = g.length;
     g.forEach(q => {
       const x = q.x0 + (q.i ? 1 : 0), w = q.x1 - q.x0 - (q.i ? 1 : 0) - (q.i < k - 1 ? 1 : 0);
-      if (w > 0.5) s += `<rect x="${f1(x)}" y="${y}" width="${f1(w)}" height="${BH}" rx="${f1(Math.min(4, w / 2))}" fill="${col[q.i].c}"/>`;
+      if (w > 0.5) s += `<rect x="${f1(x)}" y="${y}" width="${f1(w)}" height="${BH}" rx="${f1(Math.min(4, w / 2))}" fill="${col[q.i].c}" data-z="${key}${q.i}"/>`;
     });
     const a = g[0], b = g[k - 1], fwA = a.fl ? Math.min(26, (a.x1 - a.x0) * 0.7) : 0, fwB = b.fr ? Math.min(26, (b.x1 - b.x0) * 0.7) : 0;
     if (fwA > 1) s += `<rect x="${f1(a.x0)}" y="${y}" width="${f1(fwA)}" height="${BH}" fill="url(#fl${uid})" pointer-events="none"/>`;
     if (fwB > 1) s += `<rect x="${f1(b.x1 - fwB)}" y="${y}" width="${f1(fwB)}" height="${BH}" fill="url(#fr${uid})" pointer-events="none"/>`;
     g.forEach(q => {
-      const nm = o.names[q.i] || ''; const tw = nm.length * 7 + 10;
-      const l0 = q.x0 + (q === a ? fwA * 0.6 : 0), l1 = q.x1 - (q === b ? fwB * 0.6 : 0);
-      if (l1 - l0 < tw) return;
-      s += `<text x="${f1((l0 + l1) / 2)}" y="${y + BH / 2 + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="${col[q.i].t}" pointer-events="none">${esc(nm)}</text>`;
+      const nm = names[q.i] || '', tw = nm.length * 6.6 + 6;
+      const l0 = q.x0 + (q === a ? fwA * 0.5 : 0), l1 = q.x1 - (q === b ? fwB * 0.5 : 0);
+      if (!nm || l1 - l0 < tw) return;
+      s += `<text x="${f1((l0 + l1) / 2)}" y="${y + BH / 2 + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="${col[q.i].t}" pointer-events="none" data-n="${key}${q.i}">${esc(nm)}</text>`;
     });
-    const q = g[self.sel];
-    if (q && q.x1 - q.x0 > 2) s += `<rect x="${f1(q.x0 + 1)}" y="${y - 1}" width="${f1(q.x1 - q.x0 - 2)}" height="${BH + 2}" rx="5" fill="none" stroke="#eef4fb" stroke-width="2" pointer-events="none"/>`;
+    g.forEach(q => { if (isSel(key, q.i) && q.x1 - q.x0 > 2) s += `<rect x="${f1(q.x0 + 1)}" y="${y - 1}" width="${f1(q.x1 - q.x0 - 2)}" height="${BH + 2}" rx="5" fill="none" stroke="#eef4fb" stroke-width="2" pointer-events="none" data-sel="${key}${q.i}"/>`; });
     return s;
   }
   function marker(t, edge, down, strong, rowLab, X, W) {
@@ -574,7 +582,7 @@ function Ribbon(host, o) {
     const txt = 'umbral ' + fvs(o.sport, o.met, t), tw = txt.length * (strong ? 6.3 : 5.9);
     const cx = Math.min(Math.max(x, rowLab.length * 7.6 + 12 + tw / 2), W - tw / 2 - 1);
     const ty = down ? edge - 10 : edge + 20;
-    return `<path d="${tri}" fill="${strong ? '#eef4fb' : '#9db0c4'}"/><text x="${f1(cx)}" y="${ty}" text-anchor="middle" font-size="11" font-weight="${strong ? 800 : 600}" fill="${strong ? '#eef4fb' : '#9db0c4'}">${esc(txt)}</text>`;
+    return `<path d="${tri}" fill="${strong ? '#eef4fb' : '#9db0c4'}"/><text x="${f1(cx)}" y="${ty}" text-anchor="middle" font-size="11" font-weight="${strong ? 800 : 600}" fill="${strong ? '#eef4fb' : '#9db0c4'}" class="halo">${esc(txt)}</text>`;
   }
   self.draw = function () {
     const W = Math.round(host.clientWidth); if (W < 40) return;
@@ -584,21 +592,21 @@ function Ribbon(host, o) {
     let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(o.aria)}"><defs>` +
       `<linearGradient id="fl${uid}"><stop offset="0" stop-color="#121922"/><stop offset="1" stop-color="#121922" stop-opacity="0"/></linearGradient>` +
       `<linearGradient id="fr${uid}"><stop offset="0" stop-color="#121922" stop-opacity="0"/><stop offset="1" stop-color="#121922"/></linearGradient></defs>`;
-    if (gA && A.length === B.length) {
-      const pa = gA[self.sel], pb = gB[self.sel];
-      if (pa && pb) s += `<polygon points="${f1(pa.x0)},${yA + BH} ${f1(pa.x1)},${yA + BH} ${f1(pb.x1)},${yB} ${f1(pb.x0)},${yB}" fill="${cB[self.sel].c}" opacity=".22"/>`;
+    if (paired) {
+      const pa = gA[self.sel.i], pb = gB[self.sel.i];
+      if (pa && pb) s += `<polygon points="${f1(pa.x0)},${yA + BH} ${f1(pa.x1)},${yA + BH} ${f1(pb.x1)},${yB} ${f1(pb.x0)},${yB}" fill="${cB[self.sel.i].c}" opacity=".22"/>`;
       for (let i = 1; i < B.length; i++) {
         const xa = gA[i].x0, xb = gB[i].x0;
         if (xa > 0.5 && xa < W - 0.5 && xb > 0.5 && xb < W - 0.5) s += `<line x1="${f1(xa)}" y1="${yA + BH + 1}" x2="${f1(xb)}" y2="${yB - 1}" stroke="#3a4d63" stroke-width="1"/>`;
       }
     }
-    const row = (txt, y) => `<text x="0" y="${y}" font-size="10.5" font-weight="800" letter-spacing=".8" fill="#6b7f94">${esc(txt)}</text>`;
+    const row = (txt, y) => `<text x="0" y="${y}" font-size="10.5" font-weight="800" letter-spacing=".8" fill="#6b7f94" class="halo">${esc(txt)}</text>`;
     if (both) {
-      s += bar(gA, cA, yA, W) + bar(gB, cB, yB, W);
+      s += bar(gA, cA, yA, o.namesA, 'a') + bar(gB, cB, yB, o.namesB, 'b');
       s += row(o.labA, 12) + row(o.labB, yB + BH + 20);
       s += marker(o.tA, yA, true, false, o.labA, X, W) + marker(o.tB, yB + BH, false, true, o.labB, X, W);
     } else {
-      s += bar(gB, cB, yB, W) + row(o.labB, 12) + marker(o.tB, yB, true, true, o.labB, X, W);
+      s += bar(gB, cB, yB, o.namesB, 'b') + row(o.labB, 12) + marker(o.tB, yB, true, true, o.labB, X, W);
     }
     host.innerHTML = s + '</svg>';
   };
@@ -606,10 +614,12 @@ function Ribbon(host, o) {
     const svg = host.firstElementChild; if (!svg || !self.gB) return;
     const r = svg.getBoundingClientRect(); if (!r.width) return;
     const x = (ev.clientX - r.left) * self.W / r.width, y = (ev.clientY - r.top) * H / r.height;
-    const g = self.gA && y < (yA + BH + yB) / 2 ? self.gA : self.gB;
+    const key = self.gA && y < (yA + BH + yB) / 2 ? 'a' : 'b', g = key === 'a' ? self.gA : self.gB;
     let best = -1, bd = 1e9;
     g.forEach(q => { if (q.x1 - q.x0 <= 0.5) return; const d = x < q.x0 ? q.x0 - x : x > q.x1 ? x - q.x1 : 0; if (d < bd) { bd = d; best = q.i; } });
-    if (best >= 0 && best !== self.sel) { self.sel = best; self.draw(); if (self.onSel) self.onSel(best); }
+    if (best < 0) return;
+    const ns = { bar: paired ? 'b' : key, i: best };
+    if (ns.bar !== self.sel.bar || ns.i !== self.sel.i) { self.sel = ns; self.draw(); if (self.onSel) self.onSel(ns); }
   };
   host.addEventListener('pointerdown', ev => { try { host.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ } pick(ev); });
   host.addEventListener('pointermove', ev => { if (ev.pointerType === 'mouse' || ev.buttons) pick(ev); });
@@ -646,20 +656,24 @@ function yTicks(sp, m, v0, v1, Y) {
   return out;
 }
 function Curve(host, o) {
-  /* o: {sport, met, pts [[s,v,fecha]] ordenados, st, tN, tP, showNew, aria} */
-  const pts = o.pts, col = BASE[o.sport] || BASE.old;
+  /* o: {sport, met, pts [[s,v,fecha]] ordenados, e (métrica o null), showNew, aria} */
+  const pts = o.pts, col = BASE[o.sport] || BASE.old, e = o.e;
+  const st = e ? e.st : '', tN = e ? e.tN : NaN, tP = e ? e.tP : NaN, tV = e ? e.tV : NaN, rev = !!(e && e.rev);
   const i20 = pts.findIndex(p => p[0] === 1200);
   let near20 = 0; pts.forEach((p, i) => { if (Math.abs(Math.log(p[0] / 1200)) < Math.abs(Math.log(pts[near20][0] / 1200))) near20 = i; });
   const self = { sel: i20 >= 0 ? i20 : near20, onSel: null };
-  const lines = [];
-  if (o.st === 'igual') {
-    const v = o.tP > 0 ? o.tP : o.tN;
-    if (v > 0) lines.push({ v, c: '#ffd23f', strong: true, lab: 'tu umbral ' + fvs(o.sport, o.met, v) + ' (se mantiene)' });
-  } else {
-    if (o.showNew && o.tN > 0) lines.push({ v: o.tN, c: '#ffd23f', strong: true, lab: 'umbral nuevo ' + fvs(o.sport, o.met, o.tN) });
-    if (o.tP > 0 && !(o.showNew && Math.abs(o.tP - o.tN) < 1e-9)) lines.push({ v: o.tP, c: '#6b7f94', strong: false, lab: (o.showNew ? 'antes ' : 'umbral vigente ') + fvs(o.sport, o.met, o.tP) });
+  const fx = x => fvs(o.sport, o.met, x), lines = [];
+  /* etiquetas cortas (la leyenda bajo la gráfica explica cada línea): caben entre los puntos a 390 px */
+  if (o.showNew) {
+    if (tN > 0) lines.push({ v: tN, c: '#ffd23f', strong: true, lab: 'nuevo ' + fx(tN) });
+    if (tP > 0 && Math.abs(tP - tN) > 1e-9) lines.push({ v: tP, c: '#6b7f94', strong: false, lab: 'antes ' + fx(tP) });
+  } else if (tV > 0) {
+    /* P2: el umbral vigente es el de new cuando existe */
+    if (st === 'igual') lines.push({ v: tV, c: '#ffd23f', strong: true, lab: 'umbral ' + fx(tV) });
+    else lines.push({ v: tV, c: '#6b7f94', strong: false, lab: 'vigente ' + fx(tV) });
   }
-  const pinTxt = o.st === 'artefacto' ? '20′ · dato descartado' : o.st === 'igual' ? '20′ · confirma tu umbral' : (o.showNew ? '20′ · fija tu umbral' : (o.st === 'sin_dato' ? '20′ · sin dato' : '20′'));
+  /* las curvas llegan limpias: nunca se dibuja ni se anuncia un marcador de dato descartado */
+  const pinTxt = st === 'igual' ? '20′ · confirma tu umbral' : o.showNew ? '20′ · fija tu umbral' : st === 'sin_dato' ? '20′ · sin dato' : '20′';
   /* eje X: el rango real de duraciones presentes (más la referencia de 20′), sin forzar 5 s ni 3 h */
   const s0 = Math.min(pts[0][0], 1200), s1 = Math.max(pts[pts.length - 1][0], 1200);
   const L0 = Math.log10(s0) - 0.03, L1 = Math.log10(s1 > s0 ? s1 : s0 * 2) + 0.03;
@@ -691,23 +705,39 @@ function Curve(host, o) {
     s += `<text x="0" y="14" font-size="11" font-weight="800" fill="#9db0c4">${o.met === 'sp' ? '↑ más rápido' : o.met === 'hr' ? 'ppm' : 'W'}</text>`;
     const d = pts.map((p, i) => (i ? 'L' : 'M') + f1(X(p[0])) + ' ' + f1(Y(p[1]))).join(' ');
     s += `<path d="${d} L${f1(X(pts[pts.length - 1][0]))} ${bot} L${f1(X(pts[0][0]))} ${bot} Z" fill="${col}" fill-opacity=".10"/>`;
-    lines.slice().sort((a, b) => b.v - a.v).forEach((l, j) => {
-      const y = Y(l.v);
-      s += `<line x1="${m.l}" x2="${W - m.r}" y1="${f1(y)}" y2="${f1(y)}" stroke="${l.c}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
-      s += `<text x="${m.l + 6}" y="${f1(j === 0 ? y - 5 : y + 13)}" font-size="10.5" font-weight="${l.strong ? 800 : 600}" fill="${l.strong ? '#eef4fb' : '#9db0c4'}">${esc(l.lab)}</text>`;
-    });
+    const Ls = lines.slice().sort((a, b) => b.v - a.v);
+    Ls.forEach(l => { const y = Y(l.v); s += `<line x1="${m.l}" x2="${W - m.r}" y1="${f1(y)}" y2="${f1(y)}" stroke="${l.c}" stroke-width="1.5" stroke-dasharray="5 4"/>`; });
     const q = pts[self.sel];
     if (q) s += `<line x1="${f1(X(q[0]))}" x2="${f1(X(q[0]))}" y1="${m.t}" y2="${bot}" stroke="#9db0c4" stroke-width="1" opacity=".5"/>`;
     s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    const p20 = i20 >= 0 ? pts[i20] : null;
-    if ((p20 || o.st === 'sin_dato') && 1200 >= s0 && 1200 <= s1) {
-      const x = X(1200), tw = pinTxt.length * 6.2, cx = Math.min(Math.max(x, 96 + tw / 2), W - tw / 2 - 2);
-      s += `<line x1="${f1(x)}" x2="${f1(x)}" y1="19" y2="${f1(p20 ? Y(p20[1]) - 9 : bot)}" stroke="#ffd23f" stroke-width="1" stroke-dasharray="3 3"/>`;
-      s += `<text x="${f1(cx)}" y="14" text-anchor="middle" font-size="11" font-weight="800" fill="#eef4fb">${esc(pinTxt)}</text>`;
-    }
+    const p20 = i20 >= 0 ? pts[i20] : null, pin = (p20 || st === 'sin_dato') && 1200 >= s0 && 1200 <= s1;
+    if (pin) s += `<line x1="${f1(X(1200))}" x2="${f1(X(1200))}" y1="19" y2="${f1(p20 ? Y(p20[1]) - 9 : bot)}" stroke="#ffd23f" stroke-width="1" stroke-dasharray="3 3"/>`;
     pts.forEach(p => { s += `<circle cx="${f1(X(p[0]))}" cy="${f1(Y(p[1]))}" r="4" fill="${col}" stroke="#121922" stroke-width="2"/>`; });
     if (p20) s += `<circle cx="${f1(X(1200))}" cy="${f1(Y(p20[1]))}" r="8.5" fill="none" stroke="#ffd23f" stroke-width="2"/>`;
     if (q) s += `<circle cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="6" fill="#eef4fb" stroke="${col}" stroke-width="2.5"/>`;
+    /* etiquetas de umbral encima de todo, con halo, en el primer hueco que no pise ningún punto */
+    const P = pts.map(p => [X(p[0]), Y(p[1])]), boxes = [];
+    const hits = b => P.filter(([cx, cy]) => cx > b.x0 - 7 && cx < b.x1 + 7 && cy > b.y0 - 7 && cy < b.y1 + 7).length +
+      boxes.filter(c => b.x0 < c.x1 + 4 && b.x1 > c.x0 - 4 && b.y0 < c.y1 + 2 && b.y1 > c.y0 - 2).length * 9;
+    Ls.forEach((l, j) => {
+      const y = Y(l.v), tw = l.lab.length * 6.1, ys = j === 0 ? [y - 5, y + 13, y - 19, y + 27] : [y + 13, y - 5, y + 27, y - 19];
+      const xs = [m.l + 6, W - m.r - 6 - tw, m.l + (pw - tw) / 2, m.l + (pw - tw) * 0.25, m.l + (pw - tw) * 0.75];
+      let best = null, bestH = 1e9;
+      for (const ty of ys) {
+        for (const x0 of xs) {
+          const b = { x0, x1: x0 + tw, y0: ty - 9, y1: ty + 3 }; if (b.y0 < m.t - 4 || b.y1 > bot + 2 || x0 < m.l) continue;
+          const h = hits(b); if (h < bestH) { best = b; bestH = h; } if (!h) break;
+        }
+        if (!bestH) break;
+      }
+      if (!best) best = { x0: xs[0], x1: xs[0] + tw, y0: ys[0] - 9, y1: ys[0] + 3 };
+      boxes.push(best);
+      s += `<text x="${f1(best.x0)}" y="${f1(best.y0 + 9)}" font-size="10.5" font-weight="${l.strong ? 800 : 600}" fill="${l.strong ? '#eef4fb' : '#9db0c4'}" class="halo thr-lab">${esc(l.lab)}</text>`;
+    });
+    if (pin) {
+      const x = X(1200), tw = pinTxt.length * 6.2, cx = Math.min(Math.max(x, 96 + tw / 2), W - tw / 2 - 2);
+      s += `<text x="${f1(cx)}" y="14" text-anchor="middle" font-size="11" font-weight="800" fill="#eef4fb" class="halo">${esc(pinTxt)}</text>`;
+    }
     s += `<rect x="${m.l - 12}" y="0" width="${pw + 24}" height="${H}" fill="transparent"/>`;
     host.innerHTML = s + '</svg>';
   };
@@ -734,6 +764,23 @@ function Curve(host, o) {
 }
 
 /* ---------- normalización de cada métrica ---------- */
+function deepEq(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (Math.abs(a[i][0] - b[i][0]) > 1e-9 || Math.abs(a[i][1] - b[i][1]) > 1e-9) return false;
+  return true;
+}
+/* ¿new.z es de verdad prev.z × k al redondeo? (hr/pw ±1 · sp ±0,0002; extremos abiertos aparte) */
+function isScaled(m, A, B, k, tA, tB) {
+  if (!A || !B || A.length !== B.length || !(k > 0)) return false;
+  const tol = (m === 'sp' ? 0.0002 : 1) + 1e-9, n = B.length;
+  for (let i = 0; i < n; i++) {
+    const ea = zEnds(m, A[i], i, n, tA), eb = zEnds(m, B[i], i, n, tB);
+    if (ea.lo !== eb.lo || ea.hi !== eb.hi) return false;
+    if (!ea.lo && Math.abs(B[i][0] - A[i][0] * k) > tol) return false;
+    if (!ea.hi && Math.abs(B[i][1] - A[i][1] * k) > tol) return false;
+  }
+  return true;
+}
 function norm(sport, met, M) {
   const prev = cleanZ(M.prev), next = cleanZ(M.new);
   const tP = num(M.prev && M.prev.thr), tN = num(M.new && M.new.thr);
@@ -741,14 +788,29 @@ function norm(sport, met, M) {
   if (!st) st = tN > 0 || next ? (tP > 0 ? (tN > tP ? 'sube' : tN < tP ? 'baja' : 'igual') : 'nuevo') : 'sin_dato';
   /* sin zonas ni umbral previos no hay «antes»: sube/baja (e igual) se leen como «nuevo» */
   if ((st === 'sube' || st === 'baja' || st === 'igual') && !prev && !(tP > 0)) st = 'nuevo';
-  /* changed = hay zonas/umbral nuevos que mostrar; «igual» conserva las vigentes */
+  /* changed = el cálculo propone o escribió un umbral nuevo (sube/baja/nuevo) */
   const changed = (st === 'sube' || st === 'baja' || st === 'nuevo') && (tN > 0 || !!next);
   const tp = M.tp === 'escrito' || M.tp === 'propuesta' ? M.tp : null;
   const src = M.new && M.new.src && typeof M.new.src === 'object' ? M.new.src : null;
-  return { sport, met, st, tp, prev, next, tP, tN, changed, src,
+  /* P2: el set vigente/principal es SIEMPRE new cuando existe (en cualquier estado); prev es «antes» */
+  const main = next || prev, tV = tN > 0 ? tN : tP;
+  const identical = deepEq(prev, next);
+  const showA = !!(prev && next && !identical && (st === 'sube' || st === 'baja' || st === 'igual'));
+  const paired = showA && prev.length === next.length;
+  const k = tP > 0 && tN > 0 ? tN / tP : NaN;
+  return { sport, met, st, tp, prev, next, main, tP, tN, tV, changed, src, identical, showA, paired, k,
+    scaled: paired && isScaled(met, prev, next, k, tP, tN),
+    rev: M.rev === true && st === 'artefacto',
     scheme: M.scheme ? String(M.scheme) : '', nota: M.nota ? String(M.nota) : '',
-    id: 'c-' + sport + '-' + met, k: tP > 0 && tN > 0 ? tN / tP : NaN,
-    pc: tP > 0 && tN > 0 ? (tN - tP) / tP * 100 : NaN };
+    id: 'c-' + sport + '-' + met, pc: tP > 0 && tN > 0 ? (tN - tP) / tP * 100 : NaN };
+}
+/* una categoría por métrica para el resumen (el % solo pinta la flecha) */
+function cat(e) {
+  if (e.changed) return e.st === 'nuevo' ? 'new' : e.st === 'baja' ? 'down' : 'up';
+  if (e.st === 'artefacto') return e.rev ? 'rev' : 'art';
+  if (!e.main) return 'none';
+  if (e.st === 'igual' && e.tp === 'propuesta' && e.showA) return 'prop';
+  return 'flat';
 }
 const dirOf = pc => !isFinite(pc) ? 'flat' : pc > 0.005 ? 'up' : pc < -0.005 ? 'down' : 'flat';
 const arrOf = c => c === 'up' ? '▲' : c === 'down' ? '▼' : '=';
@@ -763,14 +825,25 @@ function diffTxt(e) {
 }
 
 /* ---------- textos del registro atleta (llano, metafórico, corto) ---------- */
+const ZN_TXT = 'Zonas nuevas: antes no tenías zonas propias para esta métrica en TrainingPeaks';
+const REV_TXT = 'Tu umbral actual salió de ese mismo dato descartado: tu entrenador lo va a revisar.';
 function metaphor(e) {
+  if (e.rev) return REV_TXT;
+  if (!e.main) return 'Sin zonas para esta métrica por ahora.';
   if (e.st === 'sin_dato') return 'Sin un esfuerzo continuo de 20 minutos no hay foto nueva. Tu mapa sigue vigente.';
   if (e.st === 'artefacto') return 'Un dato que no es fiable no mueve tus zonas. Se queda fuera y tu mapa sigue como estaba.';
-  if (e.st === 'igual') return 'Tu mejor 20′ confirma tu umbral (diferencia menor al 1 %). Mismo mapa, mismas zonas.';
+  if (e.st === 'igual') {
+    if (e.tp === 'propuesta' && e.showA && e.nota) return e.nota;            /* P4: el texto sale de la nota */
+    const base = 'Tu mejor 20′ confirma tu umbral (diferencia menor al 1 %). ';
+    if (e.identical || !e.next) return base + 'Mismo mapa, mismas zonas.';
+    if (!e.prev) return base + 'Tus zonas son las que tienes hoy en TrainingPeaks.';
+    if (!e.paired) return base + `Tu umbral se mantiene; tus zonas se reorganizaron con el esquema ${e.scheme || 'nuevo'}: ahora ${e.next.length} zonas.`;
+    return base + 'Tu umbral se mantiene; tus zonas se ajustaron.';
+  }
   if (e.st === 'nuevo') return 'Primera foto de esta métrica: desde aquí medimos tu progreso.';
   const c = dirOf(e.pc);
   if (!(e.tP > 0)) return 'Primera foto de este umbral: desde aquí medimos tu progreso.';
-  if (c === 'down' && e.pc <= -10) return 'Tu mejor esfuerzo reciente quedó por debajo de tu umbral: puede ser que no hubo esfuerzos fuertes en esa zona, no necesariamente pérdida de forma. Tu entrenador decide.';
+  if (c === 'down' && e.pc <= -10) return 'Tu mejor esfuerzo reciente quedó por debajo de tu umbral: puede ser que no hubo esfuerzos fuertes en esa zona, no necesariamente pérdida de forma.' + (e.tp === 'escrito' ? '' : ' Tu entrenador decide.');
   if (c === 'up') {
     if (e.met === 'pw') return 'Tu motor subió de marcha. Empujas más vatios en el umbral y tus zonas suben con él.';
     if (e.met === 'hr') return 'Tu corazón aguanta más arriba. El techo de crucero subió y tus zonas suben con él.';
@@ -782,77 +855,105 @@ function metaphor(e) {
   return 'Tu umbral se sostiene. Mismo mapa, mismas zonas.';
 }
 
-/* ---------- constructores de HTML ---------- */
+/* ---------- registro entrenador: matemática explícita ---------- */
 let PENDING = [];
 let WIN = { txt: 'últimos 90 días', short: '90 días' };
 function tpWord(tp) { return tp === 'escrito' ? 'escrito (ya cargado)' : tp === 'propuesta' ? 'propuesta (pendiente de visto bueno)' : 'sin indicar'; }
-function rawV(e, x) { return e.met === 'sp' ? nf(x, 2) + ' m/s (' + fvs(e.sport, e.met, x) + ')' : fvs(e.sport, e.met, x); }
-/* regla del 1 % (estado «igual»): MM20 de la curva (o el umbral candidato) frente al umbral vigente */
-function rule1(e) {
-  const vig = e.tP > 0 ? e.tP : e.tN, mm = e.p20 ? e.p20[1] : (e.tN > 0 ? e.tN : NaN);
-  if (!(vig > 0) || !(mm > 0)) return null;
-  return { mm, vig, r: Math.abs(mm / vig - 1) * 100, date: e.p20 ? e.p20[2] : (e.src && e.src.date) };
+/* P5: velocidades con 4 decimales para que la cuenta que se ve dé el resultado que se ve */
+const decOf = (m, x) => m === 'sp' ? 4 : (Number.isInteger(x) ? 0 : 1);
+const rnd = (x, d) => +(+x).toFixed(d);
+function rawV(e, x) { return e.met === 'sp' ? nf(x, 4) + ' m/s (' + fvs(e.sport, e.met, x) + ')' : nf(x, decOf(e.met, x)) + (e.met === 'hr' ? ' ppm' : ' W'); }
+function ratio(e, x, y) {           /* operandos redondeados como se muestran y su cociente */
+  const d = Math.max(decOf(e.met, x), decOf(e.met, y)), a = rnd(x, d), b = rnd(y, d);
+  return { a, b, d, q: a / b };
 }
-
-function coachMetric(e) {
-  const nm = thrName(e.sport, e.met), u = e.met === 'sp' ? 'm/s' : e.met === 'hr' ? 'ppm' : 'W', dd = e.met === 'sp' ? 2 : 0;
+function thrMath(e) {
+  const R = ratio(e, e.tN, e.tP), u = e.met === 'sp' ? 'm/s' : e.met === 'hr' ? 'ppm' : 'W';
+  return `<b>${esc(rawV(e, R.b))} → ${esc(rawV(e, R.a))}</b> · Δ ${esc(sgn(R.a - R.b, R.d))} ${u} (${esc(sgn((R.q - 1) * 100, 2))}%) · ` +
+    `k = ${esc(nf(R.a, R.d))} / ${esc(nf(R.b, R.d))} = <b>${esc(nf(R.q, 4))}</b>.`;
+}
+/* regla del 1 % (estado «igual»): MM20 de la curva frente al umbral vigente (new.thr) */
+function rule1(e) {
+  if (!(e.tV > 0) || !e.p20) return null;
+  const R = ratio(e, e.p20[1], e.tV);
+  return { mm: R.a, vig: R.b, d: R.d, r: Math.abs(R.q - 1) * 100, date: e.p20[2] };
+}
+/* P6: solo se habla de «fronteras × k» si new.z es de verdad prev.z × k */
+function zonesSentence(e) {
   const sch = '«' + esc(e.scheme || 'sin nombre') + '»';
+  if (e.scaled) return `Zonas = fronteras del esquema ${sch} × k${e.met === 'sp' ? ' (sobre la velocidad en m/s)' : ''}.`;
+  if (/stryd/i.test(e.scheme)) return 'Zonas = esquema Stryd: 80/90/100/115 % del umbral, Z1 desde 0.';
+  if (e.tp === 'escrito') return 'Zonas = set vigente en TrainingPeaks.';
+  if (e.tp === 'propuesta') return 'Zonas recalculadas sobre el umbral.';
+  return `Zonas del esquema ${sch} tal como vienen en el enlace.`;
+}
+function countNote(e) { return e.showA && !e.paired ? ` Antes ${e.prev.length} zonas → ahora ${e.next.length} zonas: no se emparejan por índice.` : ''; }
+function coachMetric(e) {
+  const nm = thrName(e.sport, e.met), sch = '«' + esc(e.scheme || 'sin nombre') + '»';
   const src = e.src ? 'Fuente: «' + esc(e.src.label || 'mejor 20′') + '» · ' + esc(fdate(e.src.date)) + (e.src.wid != null && e.src.wid !== '' ? ' · entreno ' + esc(e.src.wid) : '') + '.' : 'Fuente: no indicada en el enlace.';
+  const tpL = ' TrainingPeaks: ' + tpWord(e.tp) + '.';
   let b;
   if (e.changed && e.st !== 'nuevo' && e.tN > 0 && e.tP > 0) {
-    b = `${esc(nm)} = media del mejor 20′ crudo en ${esc(WIN.txt)}.<br>${src}<br>` +
-      `<b>${esc(rawV(e, e.tP))} → ${esc(rawV(e, e.tN))}</b> · Δ ${esc(sgn(e.tN - e.tP, dd))} ${u} (${esc(sgn(e.pc, 2))}%) · ` +
-      `k = ${esc(nf(e.tN, dd))} / ${esc(nf(e.tP, dd))} = <b>${esc(nf(e.k, 4))}</b>.<br>` +
-      `Zonas = fronteras del esquema ${sch} × k${e.met === 'sp' ? ' (sobre la velocidad en m/s)' : ''}. TrainingPeaks: ${tpWord(e.tp)}.`;
+    b = `${esc(nm)} = media del mejor 20′ crudo en ${esc(WIN.txt)}.<br>${src}<br>${thrMath(e)}<br>${zonesSentence(e)}${countNote(e)}${tpL}`;
   } else if (e.changed) {
     b = `${esc(nm)} = media del mejor 20′ crudo en ${esc(WIN.txt)}.<br>${src}<br>` +
-      (e.st === 'nuevo' ? 'Zonas nuevas: no había zonas de esta métrica en TrainingPeaks, así que no hay umbral anterior ni k. ' : 'Sin umbral anterior en el enlace: no hay k. ') +
-      `${esc(nm)} nuevo: <b>${e.tN > 0 ? esc(rawV(e, e.tN)) : '—'}</b>; zonas del esquema ${sch} sobre ese umbral. TrainingPeaks: ${tpWord(e.tp)}.`;
+      (e.st === 'nuevo' ? 'Zonas nuevas: no había zonas propias de esta métrica en TrainingPeaks (pudo existir un set Default), así que no hay umbral anterior ni k. ' : 'Sin umbral anterior en el enlace: no hay k. ') +
+      `${esc(nm)} nuevo: <b>${e.tN > 0 ? esc(rawV(e, e.tN)) : '—'}</b>. ${zonesSentence(e)}${tpL}`;
   } else if (e.st === 'igual') {
     const R = rule1(e);
-    b = 'Regla del 1 %: si |MM20 / umbral vigente − 1| &lt; 1 %, se mantiene el umbral vigente y no se reescalan las zonas.<br>' +
+    b = 'Regla del 1 %: si |MM20 / umbral vigente − 1| &lt; 1 %, se mantiene el umbral vigente.<br>' +
       (R ? `MM20 = <b>${esc(rawV(e, R.mm))}</b>${R.date ? ' · ' + esc(fdate(R.date)) : ''} · ${esc(nm)} vigente = <b>${esc(rawV(e, R.vig))}</b> · ` +
-        `|${esc(nf(R.mm, dd))} / ${esc(nf(R.vig, dd))} − 1| = <b>${esc(nf(R.r, 2))} %</b>${R.r < 1 ? ' &lt; 1 % → se mantiene' : ' (≥ 1 %: revisar el estado «igual»)'}.`
-        : 'El enlace no trae el MM20, solo el estado «igual».') +
-      `<br>${e.src ? src + ' ' : ''}Zonas vigentes del esquema ${sch}. TrainingPeaks: ${tpWord(e.tp)}.`;
+        `|${esc(nf(R.mm, R.d))} / ${esc(nf(R.vig, R.d))} − 1| = <b>${esc(nf(R.r, 2))} %</b>${R.r < 1 ? ' &lt; 1 % → se mantiene' : ' (≥ 1 %: revisar el estado «igual»)'}.`
+        : `MM20 no incluido en el enlace. ${esc(nm)} vigente = <b>${e.tV > 0 ? esc(rawV(e, e.tV)) : '—'}</b>.`) +
+      '<br>' + (e.showA ? zonesSentence(e) + countNote(e) : e.next && e.prev ? 'Zonas idénticas al set anterior.' : `Zonas vigentes del esquema ${sch}.`) + tpL;
   } else if (e.st === 'artefacto') {
-    b = `Candidato descartado${e.tN > 0 ? ': <b>' + esc(rawV(e, e.tN)) + '</b>' + (e.tP > 0 ? ' (' + esc(sgn(e.pc, 1)) + '% frente al vigente)' : '') : ''}.${e.src ? ' ' + src : ''}<br>` +
-      `Motivo: ${esc(e.nota || 'sin motivo indicado')}.<br>No se aplica k. Zonas vigentes: ${esc(nm)} ${e.tP > 0 ? '<b>' + esc(rawV(e, e.tP)) + '</b>' : '—'}, esquema ${sch}.`;
+    b = `MM20 descartado. Motivo: ${esc(e.nota || 'sin motivo indicado')}.<br>` +
+      (e.main ? `No se aplica k. ${esc(nm)} vigente = <b>${e.tV > 0 ? esc(rawV(e, e.tV)) : '—'}</b>, esquema ${sch}.` : 'Sin zonas previas ni vigentes para esta métrica en el enlace.') +
+      (e.rev ? '<br><b>El umbral vigente coincide con el MM20 descartado → revisar.</b>' : '');
   } else {
-    b = `Sin MM20 válido en ${esc(WIN.txt)}: no se recalcula ${esc(nm)}.<br>Se conservan las zonas vigentes: ${esc(nm)} ${e.tP > 0 ? '<b>' + esc(rawV(e, e.tP)) + '</b>' : '—'}, esquema ${sch}.` + (e.nota ? '<br>Nota: ' + esc(e.nota) : '');
+    b = `Sin MM20 válido en ${esc(WIN.txt)}: no se recalcula ${esc(nm)}.<br>` +
+      (e.main ? `Se conservan las zonas vigentes: ${esc(nm)} <b>${e.tV > 0 ? esc(rawV(e, e.tV)) : '—'}</b>, esquema ${sch}.` : 'Sin zonas previas ni vigentes para esta métrica en el enlace.');
   }
   return `<div class="coach-note"><span class="tag">Entrenador · ${esc(nm)}</span><span class="mono">${b}</span></div>`;
 }
 
-function zoneTable(e, names, both, main, tMain) {
-  if (!main) return '';
-  const ms = e.met === 'sp';
-  const head = '<tr><th>Zona</th>' + (both ? '<th>Antes</th><th>' + (e.tp === 'propuesta' ? 'Propuesta' : 'Ahora') + '</th>' : '<th>' + (e.st === 'nuevo' ? 'Nuevas' : e.changed ? 'Ahora' : 'Vigentes') + '</th>') +
-    '<th class="coach-only">% umbral</th>' + (both ? '<th class="coach-only"><span class="nu">× k</span></th>' : '') + '</tr>';
-  let rows = '';
-  main.forEach((z, i) => {
-    const pz = both ? e.prev[i] : null;
-    const msTxt = (q, nn, t) => ms ? `<span class="coach-only"><br><small>${esc(zms(e.met, q, i, nn, t, true))}</small></span>` : '';
-    rows += '<tr><td><b>' + esc(names[i]) + '</b></td>' +
-      (both ? '<td class="mono tag-old">' + (pz ? zcell(e.sport, e.met, pz, i, e.prev.length, e.tP) + msTxt(pz, e.prev.length, e.tP) : '—') + '</td>' : '') +
-      '<td class="mono">' + zcell(e.sport, e.met, z, i, main.length, tMain) + msTxt(z, main.length, tMain) + '</td>' +
-      '<td class="mono coach-only">' + esc(zpct(e.met, z, i, main.length, tMain)) + '</td>' +
-      (both ? '<td class="coach-only">' + (pz && e.k > 0 && e.prev.length === main.length ? kCheck(e.met, pz, z, e.k, i, main.length, e.tP, tMain) : '—') + '</td>' : '') + '</tr>';
-  });
-  const capK = (both && e.k > 0 ? `k = ${esc(nf(e.k, 4))} · cada frontera nueva = frontera anterior × k${ms ? ' (sobre la velocidad)' : ''}. ✓ = coincide al redondeo.` : '') + (ms ? ' Debajo de cada rango, la velocidad en m/s.' : '');
-  return `<details class="tv"><summary>Ver tus zonas en tabla · ${unitLab(e.sport, e.met)}</summary><div class="t-scroll"><table>${head}${rows}</table></div>${capK ? `<p class="cap coach-only">${capK.trim()}</p>` : ''}</details>`;
+function zoneTable(e, labB) {
+  const B = e.main; if (!B) return '';
+  const ms = e.met === 'sp', tB = e.tV, namesB = zoneNames(B.length, e.scheme);
+  const lb = labB === 'PROPUESTA' ? 'Propuesta' : labB === 'NUEVAS' ? 'Nuevas' : labB === 'AHORA' ? 'Ahora' : 'Vigentes';
+  const msTxt = (q, i, n, t) => ms ? `<span class="coach-only"><br><small>${esc(zms(e.met, q, i, n, t, true))}</small></span>` : '';
+  let html = '';
+  if (e.showA && e.paired) {
+    const A = e.prev;
+    html = '<div class="t-scroll"><table><tr><th>Zona</th><th>Antes</th><th>' + lb + '</th><th class="coach-only">% umbral</th>' + (e.scaled ? '<th class="coach-only"><span class="nu">× k</span></th>' : '') + '</tr>' +
+      B.map((z, i) => '<tr><td><b>' + esc(namesB[i]) + '</b></td>' +
+        '<td class="mono tag-old">' + zcell(e.sport, e.met, A[i], i, A.length, e.tP) + msTxt(A[i], i, A.length, e.tP) + '</td>' +
+        '<td class="mono">' + zcell(e.sport, e.met, z, i, B.length, tB) + msTxt(z, i, B.length, tB) + '</td>' +
+        '<td class="mono coach-only">' + esc(zpct(e.met, z, i, B.length, tB)) + '</td>' +
+        (e.scaled ? '<td class="coach-only">' + kCheck(e.met, A[i], z, e.k, i, B.length, e.tP, tB) + '</td>' : '') + '</tr>').join('') + '</table></div>';
+  } else if (e.showA) {
+    /* distinto número de zonas: dos listas, nunca se emparejan por índice */
+    const A = e.prev, namesA = zoneNames(A.length, e.scheme);
+    const list = (title, Z, names, t, cls, pct) => `<p class="cap zlist"><b>${title}</b></p><div class="t-scroll"><table><tr><th>Zona</th><th>Rango</th>${pct ? '<th class="coach-only">% umbral</th>' : ''}</tr>` +
+      Z.map((q, i) => `<tr><td><b>${esc(names[i])}</b></td><td class="mono ${cls}">${zcell(e.sport, e.met, q, i, Z.length, t)}${msTxt(q, i, Z.length, t)}</td>${pct ? `<td class="mono coach-only">${esc(zpct(e.met, q, i, Z.length, t))}</td>` : ''}</tr>`).join('') + '</table></div>';
+    html = list(`Antes: ${A.length} zonas`, A, namesA, e.tP, 'tag-old', false) + list(`${lb}: ${B.length} zonas`, B, namesB, tB, '', true);
+  } else {
+    html = '<div class="t-scroll"><table><tr><th>Zona</th><th>' + lb + '</th><th class="coach-only">% umbral</th></tr>' +
+      B.map((z, i) => '<tr><td><b>' + esc(namesB[i]) + '</b></td><td class="mono">' + zcell(e.sport, e.met, z, i, B.length, tB) + msTxt(z, i, B.length, tB) + '</td><td class="mono coach-only">' + esc(zpct(e.met, z, i, B.length, tB)) + '</td></tr>').join('') + '</table></div>';
+  }
+  let cap = e.scaled ? `k = ${esc(nf(ratio(e, e.tN, e.tP).q, 4))} · cada frontera nueva = frontera anterior × k${ms ? ' (sobre la velocidad)' : ''}. ✓ = coincide al redondeo.` :
+    (e.showA || e.changed ? zonesSentence(e) : '');
+  if (ms) cap += ' Debajo de cada rango, la velocidad en m/s.';
+  return `<details class="tv"><summary>Ver tus zonas en tabla · ${unitLab(e.sport, e.met)}</summary>${html}${cap.trim() ? `<p class="cap coach-only">${cap.trim()}</p>` : ''}</details>`;
 }
 
 function metricCard(e, span) {
   const S = SP[e.sport], Mt = MT[e.met], pace = isPace(e.sport, e.met), isNew = e.st === 'nuevo';
-  const both = !!(e.changed && !isNew && e.next && e.prev);
-  /* nunca se dibujan zonas candidatas de un artefacto o sin dato; «igual» muestra las vigentes */
-  const main = e.changed && e.next ? e.next : (e.st === 'igual' ? (e.prev || e.next) : e.prev);
-  const tMain = e.changed && e.next ? e.tN : (e.tP > 0 ? e.tP : e.tN);
-  const names = zoneNames(main ? main.length : 0, e.scheme);
-  const fN = fv(e.sport, e.met, e.tN), fP = fv(e.sport, e.met, e.tP), fM = fv(e.sport, e.met, e.changed ? e.tN : tMain);
+  const fV = fv(e.sport, e.met, e.tV), fN = fv(e.sport, e.met, e.tN), fP = fv(e.sport, e.met, e.tP);
   const tpBadge = e.tp === 'escrito' ? '<span class="badge b-ok">✓ Ya en tu TrainingPeaks</span>' : e.tp === 'propuesta' ? '<span class="badge b-hi bw">◆ Propuesta: pendiente de visto bueno de tu entrenador</span>' : '';
-  const nota = e.nota ? `<p class="note-s">${esc(e.nota)}</p>` : '';
+  const notaIsText = e.st === 'igual' && e.tp === 'propuesta' && e.showA && !!e.nota;
+  const nota = e.nota && !notaIsText ? `<p class="note-s nota">${esc(e.nota)}</p>` : '';
+  const T = (f, delta, cls) => f.v === '—' ? '' : `<div class="thr"><span class="n">${esc(f.v)}</span><span class="u">${esc(f.u)}</span>${delta ? `<span class="delta ${cls}">${delta}</span>` : ''}</div>`;
   let thr = '', badges = '', callout = '';
   if (e.changed && !isNew && e.tN > 0 && e.tP > 0) {
     const c = dirOf(e.pc);
@@ -860,40 +961,34 @@ function metricCard(e, span) {
       `<span class="delta ${c}">${arrOf(c)} ${c === 'flat' ? 'sin cambio' : esc(sgn(e.pc, 1)) + '% · ' + esc(diffTxt(e))}</span></div>`;
     badges = tpBadge; callout = nota;
   } else if (e.changed && isNew) {
-    if (fM.v !== '—') thr = `<div class="thr"><span class="n">${esc(fM.v)}</span><span class="u">${esc(fM.u)}</span><span class="delta nv">◆ zonas nuevas</span></div>`;
-    badges = tpBadge;
-    callout = `<div class="callout key"><h4>Zonas nuevas: antes no tenías zonas para esta métrica en TrainingPeaks</h4>${nota}</div>`;
+    thr = T(fN, '◆ zonas nuevas', 'nv'); badges = tpBadge;
+    callout = `<div class="callout key"><h4>${ZN_TXT}</h4>${nota}</div>`;
   } else if (e.changed) {
-    if (fM.v !== '—') thr = `<div class="thr"><span class="n">${esc(fM.v)}</span><span class="u">${esc(fM.u)}</span><span class="delta flat">umbral nuevo</span></div>`;
-    badges = tpBadge; callout = nota;
+    thr = T(fN, 'umbral nuevo', 'flat'); badges = tpBadge; callout = nota;
   } else if (e.st === 'igual') {
-    if (fM.v !== '—') thr = `<div class="thr"><span class="n">${esc(fM.v)}</span><span class="u">${esc(fM.u)}</span><span class="delta flat">= se mantiene</span></div>`;
-    badges = tpBadge; callout = nota;
+    thr = T(fV, '= se mantiene (diferencia menor al 1 %)', 'flat'); badges = tpBadge; callout = nota;
+  } else if (e.st === 'artefacto') {
+    thr = T(fV, e.rev ? '⚠ En revisión' : e.main ? '= se mantiene' : '', e.rev ? 'wrn' : 'flat');
+    badges = '<span class="badge b-hi">⚠ Dato descartado</span>';
+    callout = `<div class="callout warn"><h4>Dato descartado</h4>${e.nota ? `<p class="note-s">${esc(e.nota)}</p>` : ''}</div>`;
   } else {
-    if (e.tP > 0) thr = `<div class="thr"><span class="n">${esc(fP.v)}</span><span class="u">${esc(fP.u)}</span><span class="delta flat">= se mantiene</span></div>`;
-    if (e.st === 'artefacto') {
-      badges = '<span class="badge b-hi">⚠ Dato descartado</span>';
-      callout = `<div class="callout warn"><h4>Dato descartado</h4>${nota}</div>`;
-    } else {
-      badges = '<span class="badge b-off">Sin dato suficiente</span>';
-      callout = `<div class="callout"><h4>Sin dato suficiente en 90 días: se mantienen tus zonas</h4>${nota}</div>`;
-    }
+    thr = T(fV, e.main ? '= se mantiene' : '', 'flat');
+    badges = '<span class="badge b-off">Sin dato suficiente</span>';
+    callout = `<div class="callout"><h4>${e.main ? 'Sin dato suficiente en 90 días: se mantienen tus zonas' : 'Sin dato suficiente en 90 días'}</h4>${nota}</div>`;
   }
-  const labB = both ? (e.tp === 'propuesta' ? 'PROPUESTA' : 'AHORA') : isNew ? (e.tp === 'propuesta' ? 'PROPUESTA' : 'NUEVAS') : e.changed ? 'AHORA' : 'SE MANTIENEN';
+  const labB = e.showA ? (e.tp === 'propuesta' ? 'PROPUESTA' : 'AHORA') : isNew ? (e.tp === 'propuesta' ? 'PROPUESTA' : 'NUEVAS') :
+    e.rev ? 'EN REVISIÓN' : e.changed ? (e.main === e.next ? 'AHORA' : 'ANTERIORES') : 'SE MANTIENEN';
   let viz = '';
-  if (main) {
-    PENDING.push({ kind: 'ribbon', e, names, both, main, tMain, labB });
+  if (e.main) {
+    PENDING.push({ kind: 'ribbon', e, labB });
     viz = `<div class="viz" id="v-${e.id}"></div><div class="zleg" id="l-${e.id}" aria-label="Zonas"></div>` +
       `<div class="readout" id="o-${e.id}" aria-live="polite"></div>` +
       `<div class="dir"><span>← ${pace ? 'más lento' : 'más bajo'}</span><span>${pace ? 'más rápido' : 'más alto'} →</span></div>`;
-  } else {
-    viz = '<p class="note-s">No hay zonas registradas para esta métrica.</p>';
   }
   return `<article class="card${span ? ' span2' : ''}" id="${e.id}">` +
     `<div class="zc-h"><span class="pill ${e.sport}">${S.pill}</span><h3>${Mt.name}</h3></div>` +
     thr + (badges ? `<div class="badges">${badges}</div>` : '') + callout + viz +
-    `<div class="athlete-note">${esc(metaphor(e))}</div>` + coachMetric(e) +
-    zoneTable(e, names, both, main, tMain) + '</article>';
+    `<div class="athlete-note">${esc(metaphor(e))}</div>` + coachMetric(e) + zoneTable(e, labB) + '</article>';
 }
 
 function cleanPts(arr) {
@@ -921,45 +1016,52 @@ function curveCard(sport, S, entries) {
     PENDING.push({ kind: 'curve', id, sport, met: k, pts, e, showNew });
     const p20 = pts.find(p => p[0] === 1200);
     let an = 'Cada punto es tu mejor marca en 90 días: a la izquierda los esfuerzos más cortos, a la derecha los más largos.';
-    if (e && e.st === 'artefacto') an += ' El aro amarillo marca un dato que se descartó: no mueve tus zonas.';
-    else if (!p20) an += ' Aún no hay un bloque de 20 minutos en la ventana: por eso tus zonas se mantienen.';
-    else if (e && e.st === 'igual') an += ' El aro amarillo, tu mejor 20′, confirma tu umbral (diferencia menor al 1 %).';
-    else if (showNew) an += ' El aro amarillo, tu mejor bloque de 20 minutos, es el que fija tu umbral.';
-    else an += ' El aro amarillo marca tu mejor bloque de 20 minutos.';
-    const nm = thrName(sport, k);
+    if (e && e.st === 'artefacto') an += ' El dato descartado ya no aparece en la curva.';
+    else if (e && e.st === 'sin_dato' && !p20) an += ' Aún no hay un bloque de 20 minutos en la ventana: por eso tus zonas se mantienen.';
+    else if (e && e.st === 'igual' && p20) an += ' El aro amarillo, tu mejor 20′, confirma tu umbral (diferencia menor al 1 %).';
+    else if (showNew && p20) an += ' El aro amarillo, tu mejor bloque de 20 minutos, es el que fija tu umbral.';
+    else if (p20) an += ' El aro amarillo marca tu mejor bloque de 20 minutos.';
+    const nm = thrName(sport, k), pv = x => k === 'sp' ? nf(x, 4) + ' m/s (' + fvs(sport, k, x) + ')' : fvs(sport, k, x);
     let cn = `Curva mean-max ${esc(WIN.txt)} · ${pts.length} duraciones (${esc(durLab(pts[0][0]))} → ${esc(durLab(pts[pts.length - 1][0]))}).<br>`;
-    cn += p20 ? `MM20 = <b>${esc(k === 'sp' ? nf(p20[1], 2) + ' m/s (' + fvs(sport, k, p20[1]) + ')' : fvs(sport, k, p20[1]))}</b> · ${esc(fdate(p20[2]))}.` : 'Sin punto de 20′ en la ventana.';
+    cn += p20 ? `MM20 = <b>${esc(pv(p20[1]))}</b> · ${esc(fdate(p20[2]))}.` : 'Sin punto de 20′ en la ventana.';
     if (e && e.st === 'igual') {
       const R = rule1(e);
-      cn += R ? `<br>Regla del 1 %: |MM20 / ${esc(nm)} vigente − 1| = ${esc(nf(R.r, 2))} %${R.r < 1 ? ' &lt; 1 % → se mantiene ' + esc(nm) + ' = ' + esc(rawV(e, R.vig)) : ' (≥ 1 %: revisar el estado «igual»)'}.` : '';
-    }
-    else if (e && showNew) cn += `<br>${esc(nm)} nuevo = ${esc(rawV(e, e.tN))}${e.tP > 0 ? ' · anterior = ' + esc(rawV(e, e.tP)) + ' · k = ' + esc(nf(e.k, 4)) : ''}.`;
-    else if (e && e.tP > 0) cn += `<br>${esc(nm)} vigente = ${esc(rawV(e, e.tP))} (${e.st === 'artefacto' ? 'MM20 descartado' : 'se conserva'}).`;
+      cn += R ? `<br>Regla del 1 %: |${esc(nf(R.mm, R.d))} / ${esc(nf(R.vig, R.d))} − 1| = ${esc(nf(R.r, 2))} %${R.r < 1 ? ' &lt; 1 % → se mantiene ' + esc(nm) + ' vigente = ' + esc(rawV(e, R.vig)) : ' (≥ 1 %: revisar el estado «igual»)'}.` : (e.tV > 0 ? `<br>${esc(nm)} vigente = ${esc(rawV(e, e.tV))}.` : '');
+    } else if (e && showNew) {
+      cn += `<br>${esc(nm)} nuevo = ${esc(rawV(e, e.tN))}`;
+      if (e.tP > 0) { const R = ratio(e, e.tN, e.tP); cn += ` · anterior = ${esc(rawV(e, e.tP))} · k = ${esc(nf(R.a, R.d))} / ${esc(nf(R.b, R.d))} = ${esc(nf(R.q, 4))}`; }
+      cn += '.';
+    } else if (e && e.tV > 0) cn += `<br>${esc(nm)} vigente = ${esc(rawV(e, e.tV))} (${e.rev ? 'coincide con el MM20 descartado → revisar' : e.st === 'artefacto' ? 'MM20 descartado; la curva llega sin ese dato' : 'se conserva'}).`;
     let rows = '';
     pts.forEach(p => {
       rows += `<tr><td class="mono">${esc(durLab(p[0]))}</td><td class="mono"><b>${esc(fvs(sport, k, p[1]))}</b></td><td class="mono">${esc(fdate(p[2]))}</td>` +
         (k === 'sp' ? `<td class="mono coach-only">${esc(nf(p[1], 2))}</td>` : '') + '</tr>';
     });
     const tbl = `<details class="tv"><summary>Ver la curva en números</summary><div class="t-scroll"><table><tr><th>Duración</th><th>Mejor marca</th><th>Fecha</th>${k === 'sp' ? '<th class="coach-only"><span class="nu">m/s</span></th>' : ''}</tr>${rows}</table></div></details>`;
-    const leg = `<div class="legend">${e && e.st === 'igual' ? '<span><i class="ln"></i>tu umbral (se mantiene)</span>' :
-      (showNew ? '<span><i class="ln"></i>umbral nuevo</span>' : '') + (e && e.tP > 0 && !(showNew && Math.abs(e.tP - e.tN) < 1e-9) ? '<span><i class="ln old"></i>' + (showNew ? 'umbral anterior' : 'umbral vigente') + '</span>' : '')}` +
-      `${p20 ? '<span><i class="ring"></i>tu mejor 20′</span>' : ''}</div>`;
+    const leg = '<div class="legend">' + (e && e.st === 'igual' ? '<span><i class="ln"></i>tu umbral (se mantiene)</span>' :
+      showNew ? '<span><i class="ln"></i>umbral nuevo</span>' + (e.tP > 0 && Math.abs(e.tP - e.tN) > 1e-9 ? '<span><i class="ln old"></i>umbral anterior</span>' : '') :
+      e && e.tV > 0 ? '<span><i class="ln old"></i>umbral vigente' + (e.rev ? ' (en revisión)' : '') + '</span>' : '') +
+      (p20 ? '<span><i class="ring"></i>tu mejor 20′</span>' : '') + '</div>';
     blocks += `<div class="cblk" data-k="${k}"${i ? ' hidden' : ''}><div class="viz" id="v-${id}"></div><div class="readout" id="o-${id}" aria-live="polite"></div>${leg}` +
       `<div class="athlete-note">${esc(an)}</div><div class="coach-note"><span class="tag">Entrenador · curva ${esc(MT[k].short)}</span><span class="mono">${cn}</span></div>${tbl}</div>`;
   });
-  return `<div class="card span2" id="curva-${sport}"><div class="curve-h"><h3>Tu curva de rendimiento · ${esc(S2(sport))}</h3>${sw}</div>${blocks}</div>`;
+  return `<div class="card span2" id="curva-${sport}"><div class="curve-h"><h3>Tu curva de rendimiento · ${esc(SP[sport].de)}</h3>${sw}</div>${blocks}</div>`;
 }
-const S2 = sport => SP[sport].de;
 
 function tile(e) {
-  const showN = e.changed && e.tN > 0, v = fv(e.sport, e.met, showN ? e.tN : (e.tP > 0 ? e.tP : e.tN));
+  const c = cat(e), v = fv(e.sport, e.met, e.changed ? e.tN : e.tV);
   const tpT = e.tp === 'escrito' ? ' · en TP' : e.tp === 'propuesta' ? ' · propuesta' : '';
   let d;
-  if (e.st === 'nuevo') d = `<div class="delta nv">◆ zonas nuevas${tpT}</div>`;
-  else if (showN && e.tP > 0) { const c = dirOf(e.pc); d = `<div class="delta ${c}">${arrOf(c)} ${c === 'flat' ? 'igual' : esc(sgn(e.pc, 1)) + '%'}${tpT}</div>`; }
-  else if (showN) d = `<div class="delta flat">umbral nuevo${tpT}</div>`;
+  if (c === 'new') d = `<div class="delta nv">◆ zonas nuevas${tpT}</div>`;
+  else if (c === 'up' || c === 'down') {
+    if (e.tP > 0 && e.tN > 0) { const dc = dirOf(e.pc); d = `<div class="delta ${dc}">${arrOf(dc)} ${dc === 'flat' ? 'igual' : esc(sgn(e.pc, 1)) + '%'}${tpT}</div>`; }
+    else d = `<div class="delta flat">umbral nuevo${tpT}</div>`;
+  }
+  else if (c === 'prop') d = '<div class="delta nv">◆ propuesta · zonas recalculadas</div>';
+  else if (c === 'rev') d = '<div class="delta wrn">⚠ en revisión</div>';
+  else if (c === 'art') d = `<div class="delta wrn">⚠ descartado · ${e.main ? 'se mantiene' : 'sin zonas'}</div>`;
+  else if (c === 'none') d = '<div class="delta flat">sin zonas por ahora</div>';
   else if (e.st === 'igual') d = `<div class="delta flat">= igual${tpT}</div>`;
-  else if (e.st === 'artefacto') d = '<div class="delta wrn">⚠ descartado · se mantiene</div>';
   else d = '<div class="delta flat">sin dato · se mantiene</div>';
   return `<button type="button" class="stat" data-go="${e.id}"><div class="lab"><i class="sw ${e.sport}"></i>${SP[e.sport].acto} · ${MT[e.met].short}</div>` +
     `<div class="val mono">${esc(v.v)}<small> ${esc(v.u)}</small></div>${d}</button>`;
@@ -970,45 +1072,46 @@ function cozSection(coz) {
     .map(it => ({ dep: it.dep, met: it.met, dur: num(it.dur), val: num(it.val), prev: num(it.prev), prevDate: it.prevDate, inc: it.estado === 'incompleto', motivo: it.motivo ? String(it.motivo) : '' }))
     .sort((a, b) => SP_ORDER.indexOf(a.dep) - SP_ORDER.indexOf(b.dep) || PREF[a.dep].indexOf(a.met) - PREF[b.dep].indexOf(b.met) || a.dur - b.dur);
   if (!items.length) return '';
-  /* ok = comparable · noprev = completo sin marca previa · inc = archivo incompleto · noval = sin valor de carrera */
+  /* ok = comparable · noprev = completo sin marca previa · inc = incompleto · noval = sin valor de carrera */
   const kind = it => it.inc ? 'inc' : !isPos(it.val) ? 'noval' : !isPos(it.prev) ? 'noprev' : 'ok';
-  const cmp = it => kind(it) === 'ok';
-  const ok = items.filter(cmp), inc = items.filter(it => it.inc), noprev = items.filter(it => kind(it) === 'noprev');
+  const ok = items.filter(it => kind(it) === 'ok'), inc = items.filter(it => it.inc), noprev = items.filter(it => kind(it) === 'noprev');
   const best = ok.filter(it => it.met !== 'hr' && it.val > it.prev);
   let cards = '', rows = '';
   items.forEach(it => {
     const head = `<span class="pill ${it.dep}">${SP[it.dep].pill}</span><b>${MT[it.met].name} · ${esc(durLab(it.dur))}</b>`;
     const first = `<td>${SP[it.dep].acto} · ${MT[it.met].short}<br><small>${esc(durLab(it.dur))}</small></td>`;
-    if (kind(it) === 'noprev') {
+    const kd = kind(it);
+    if (kd === 'noprev') {
       const a = fv(it.dep, it.met, it.val);
       cards += `<div class="ci noprev"><div class="ci-h">${head}</div><div class="br"><span>Cozumel</span><b>${esc(a.v)} ${esc(a.u)}</b></div>` +
         `<span class="badge b-off bw" style="margin-top:8px">sin marca previa para comparar</span>${it.motivo ? `<p class="note-s">${esc(it.motivo)}</p>` : ''}</div>`;
-      rows += first + `<td class="mono"><b>${esc(fvs(it.dep, it.met, it.val))}</b>${it.met === 'sp' ? '<br><small>' + esc(nf(it.val, 2)) + ' m/s</small>' : ''}</td><td class="tag-old">sin marca previa</td><td class="mono">—</td></tr>`;
+      rows += first + `<td class="mono"><b>${esc(fvs(it.dep, it.met, it.val))}</b>${it.met === 'sp' ? '<br><small>' + esc(nf(it.val, 4)) + ' m/s</small>' : ''}</td><td class="tag-old">sin marca previa</td><td class="mono">—</td></tr>`;
       return;
     }
-    if (!cmp(it)) {
-      const lab = it.inc ? 'archivo incompleto: no se compara' : 'sin dato de la carrera para comparar';
-      cards += `<div class="ci inc"><div class="ci-h">${head}</div><span class="badge b-off bw">${lab}</span><div class="track hatch" role="img" aria-label="${lab}"></div>${it.motivo ? `<p class="note-s">Motivo: ${esc(it.motivo)}</p>` : ''}</div>`;
-      rows += first + `<td colspan="3" class="tag-old">${lab}${it.motivo ? '<br><small>' + esc(it.motivo) + '</small>' : ''}</td></tr>`;
+    if (kd !== 'ok') {
+      /* P8: la insignia no presume la causa; el motivo va debajo */
+      const why = it.motivo || (kd === 'noval' ? 'sin dato de la carrera' : '');
+      cards += `<div class="ci inc"><div class="ci-h">${head}</div><span class="badge b-off bw">no se compara</span><div class="track hatch" role="img" aria-label="no se compara"></div>${why ? `<p class="note-s">Motivo: ${esc(why)}</p>` : ''}</div>`;
+      rows += first + `<td colspan="3" class="tag-old">no se compara${why ? '<br><small>' + esc(why) + '</small>' : ''}</td></tr>`;
       return;
     }
     const pc = (it.val / it.prev - 1) * 100, c = it.met === 'hr' ? 'flat' : dirOf(pc), ar = arrOf(dirOf(pc));
     const star = it.met !== 'hr' && it.val > it.prev ? ' ★' : '';
     const mx = Math.max(it.val, it.prev), a = fv(it.dep, it.met, it.val), b = fv(it.dep, it.met, it.prev);
     let extra = '';
-    if (isPace(it.dep, it.met)) { const per = perOf(it.dep), dt = Math.round(per / it.val - per / it.prev); extra = Math.abs(dt) >= 1 ? ' · ' + Math.abs(dt) + ' s' + (it.dep === 'swim' ? '/100 m' : '/km') + (dt < 0 ? ' más rápido' : ' más lento') : ''; }
+    if (isPace(it.dep, it.met)) { const per = perOf(it.dep), dt = Math.round(per / it.val - per / it.prev); extra = Math.abs(dt) >= 1 ? Math.abs(dt) + ' s' + (it.dep === 'swim' ? '/100 m' : '/km') + (dt < 0 ? ' más rápido' : ' más lento') : ''; }
     cards += `<div class="ci"><div class="ci-h">${head}<span class="delta ${c}">${ar} ${esc(sgn(pc, 1))}%${star}</span></div>` +
       `<div class="br"><span>Cozumel</span><b>${esc(a.v)} ${esc(a.u)}</b></div><div class="track" role="img" aria-label="Cozumel ${esc(a.v + ' ' + a.u)}"><i style="width:${(it.val / mx * 100).toFixed(1)}%;background:var(--${it.dep})"></i></div>` +
       `<div class="br"><span>Mejor previo · ${esc(fdate(it.prevDate, false))}</span><b>${esc(b.v)} ${esc(b.u)}</b></div><div class="track" role="img" aria-label="Mejor previo ${esc(b.v + ' ' + b.u)}"><i style="width:${(it.prev / mx * 100).toFixed(1)}%;background:#86919c"></i></div>` +
-      (star ? '<p class="note-s">★ Nueva mejor marca en esta duración.</p>' : extra ? `<p class="note-s">${esc(extra.slice(3))}</p>` : '') + '</div>';
-    const msv = x => it.met === 'sp' ? '<br><small>' + esc(nf(x, 2)) + ' m/s</small>' : '';
-    rows += `<tr><td>${SP[it.dep].acto} · ${MT[it.met].short}<br><small>${esc(durLab(it.dur))}</small></td>` +
-      `<td class="mono"><b>${esc(fvs(it.dep, it.met, it.val))}</b>${msv(it.val)}</td>` +
+      (star ? '<p class="note-s">★ Nueva mejor marca en esta duración.</p>' : extra ? `<p class="note-s">${esc(extra)}</p>` : '') + '</div>';
+    const msv = x => it.met === 'sp' ? '<br><small>' + esc(nf(x, 4)) + ' m/s</small>' : '';
+    const R = it.met === 'sp' ? { a: rnd(it.val, 4), b: rnd(it.prev, 4) } : { a: it.val, b: it.prev };
+    rows += first + `<td class="mono"><b>${esc(fvs(it.dep, it.met, it.val))}</b>${msv(it.val)}</td>` +
       `<td class="mono">${esc(fvs(it.dep, it.met, it.prev))}${msv(it.prev)}<br><small>${esc(fdate(it.prevDate))}</small></td>` +
-      `<td class="mono">${esc(sgn(pc, 2))}%<br><small>×${esc(nf(it.val / it.prev, 3))}</small></td></tr>`;
+      `<td class="mono">${esc(sgn((R.a / R.b - 1) * 100, 2))}%<br><small>×${esc(nf(R.a / R.b, 4))}</small></td></tr>`;
   });
   let an;
-  if (!ok.length) an = 'Esta vez los archivos de la carrera no permiten comparar; abajo ves por qué.';
+  if (!ok.length) an = 'Esta vez la carrera no se puede comparar con tu historia; abajo ves por qué.';
   else {
     an = `De ${items.length} ${items.length === 1 ? 'medición' : 'mediciones'}, ${ok.length} se ${ok.length === 1 ? 'puede' : 'pueden'} comparar con tu historia`;
     an += best.length ? `. En ${best.length} superaste tu mejor marca previa ★.` : '.';
@@ -1043,9 +1146,10 @@ function methodSection() {
     `</div><div class="coach-note"><span class="tag">Entrenador · fórmula</span><div class="formula">` +
     `umbral<sub>nuevo</sub> = media del mejor bloque de 20′ (crudo) en la ventana ${esc(WIN.txt)}<br>` +
     `k = umbral<sub>nuevo</sub> / umbral<sub>anterior</sub><br>` +
-    `frontera<sub>i,nueva</sub> = frontera<sub>i,anterior</sub> × k (el esquema conserva sus proporciones)<br>` +
+    `frontera<sub>i,nueva</sub> = frontera<sub>i,anterior</sub> × k (solo si el set nuevo es de verdad el anterior × k al redondeo)<br>` +
     `ritmo: k se aplica a la velocidad (m/s) · carrera min/km = 1000 / v · natación min/100 m = 100 / v<br>` +
-    `igual: si |MM20 / umbral vigente − 1| &lt; 1 % → se mantiene el umbral vigente · nuevo: no había zonas de la métrica en TrainingPeaks<br>` +
+    `set vigente = new cuando existe (lo que hoy está o se propone en TrainingPeaks) · prev = antes<br>` +
+    `igual: si |MM20 / umbral vigente − 1| &lt; 1 % → se mantiene el umbral vigente · nuevo: no había zonas propias de la métrica en TrainingPeaks<br>` +
     `sin dato: no hay MM20 válido en la ventana → se conservan las zonas · artefacto: dato no fiable (sensor, GPS, corriente, aletas…) → se descarta<br>` +
     `TrainingPeaks: «escrito» = ya cargado · «propuesta» = pendiente de visto bueno` +
     `</div></div></section>`;
@@ -1067,10 +1171,8 @@ function render(D) {
     const m = D.d[s].m && typeof D.d[s].m === 'object' ? D.d[s].m : {}, C = D.d[s].c && typeof D.d[s].c === 'object' ? D.d[s].c : {};
     PREF[s].forEach(k => { if (m[k] && typeof m[k] === 'object') { const e = norm(s, k, m[k]); e.p20 = cleanPts(C[k]).find(p => p[0] === 1200) || null; entries.push(e); } });
   });
-  /* un estado = una categoría (el % solo pinta la flecha): «nuevo» nunca cuenta como «se mantiene» */
-  const cat = e => e.changed ? (e.st === 'nuevo' ? 'new' : e.st === 'baja' ? 'down' : e.st === 'sube' ? 'up' : (dirOf(e.pc) === 'down' ? 'down' : 'up')) : (e.st === 'artefacto' ? 'art' : 'flat');
   const nc = c => entries.filter(e => cat(e) === c).length;
-  const ups = nc('up'), downs = nc('down'), news = nc('new'), same = nc('flat'), art = nc('art');
+  const ups = nc('up'), downs = nc('down'), news = nc('new'), props = nc('prop'), same = nc('flat'), art = nc('art'), revs = nc('rev'), none = nc('none');
   const um = n => n === 1 ? '1 umbral' : n + ' umbrales';
   const parts = [];
   if (ups) parts.push(`<b>${um(ups)}</b> ${ups === 1 ? 'sube' : 'suben'}`);
@@ -1078,7 +1180,7 @@ function render(D) {
   if (news) parts.push(`<b>${news === 1 ? '1 métrica' : news + ' métricas'}</b> ${news === 1 ? 'estrena' : 'estrenan'} zonas`);
   const joinY = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1] : a[0];
   let head;
-  if (!parts.length) head = 'Tus zonas se mantienen: tu mapa sigue vigente.';
+  if (!parts.length) head = revs ? 'Tu entrenador revisará una parte de tu mapa antes de moverlo.' : 'Tus zonas se mantienen: tu mapa sigue vigente.';
   else if (parts.length > 1) head = `Tu mapa se reajusta: ${joinY(parts)}.`;
   else if (ups) head = `Tu motor subió de marcha: ${parts[0]}.`;
   else if (downs) head = `Tu mapa se ajusta a tu momento: ${parts[0]}.`;
@@ -1088,30 +1190,34 @@ function render(D) {
     `<div class="meta">${D.g ? `<span>Grupo <b>${esc(D.g)}</b></span>` : ''}<span>Ventana <b>${esc(WIN.txt.replace(/ \(\d+ d\)$/, ''))}</b> · ${esc(WIN.short)}</span><span class="hint">◆ Toca una zona o un punto para ver sus números</span></div></div>`;
 
   if (entries.length) {
-    const cnt = [];
-    if (ups) cnt.push(`<span class="cnt up">▲ ${ups} ${ups === 1 ? 'sube' : 'suben'}</span>`);
-    if (downs) cnt.push(`<span class="cnt down">▼ ${downs} ${downs === 1 ? 'baja' : 'bajan'}</span>`);
-    if (news) cnt.push(`<span class="cnt nv">◆ ${news} ${news === 1 ? 'nueva' : 'nuevas'}</span>`);
-    if (same) cnt.push(`<span class="cnt flat">= ${same} se ${same === 1 ? 'mantiene' : 'mantienen'}</span>`);
-    if (art) cnt.push(`<span class="cnt wrn">⚠ ${art} ${art === 1 ? 'dato descartado' : 'datos descartados'}</span>`);
+    const cnt = [], pl = (n, a, b) => n === 1 ? a : b;
+    if (ups) cnt.push(`<span class="cnt up">▲ ${ups} ${pl(ups, 'sube', 'suben')}</span>`);
+    if (downs) cnt.push(`<span class="cnt down">▼ ${downs} ${pl(downs, 'baja', 'bajan')}</span>`);
+    if (news) cnt.push(`<span class="cnt nv">◆ ${news} ${pl(news, 'nueva', 'nuevas')}</span>`);
+    if (props) cnt.push(`<span class="cnt nv">◆ ${props} ${pl(props, 'propuesta', 'propuestas')}</span>`);
+    if (same) cnt.push(`<span class="cnt flat">= ${same} se ${pl(same, 'mantiene', 'mantienen')}</span>`);
+    if (revs) cnt.push(`<span class="cnt wrn">⚠ ${revs} en revisión</span>`);
+    if (art) cnt.push(`<span class="cnt wrn">⚠ ${art} ${pl(art, 'dato descartado', 'datos descartados')}</span>`);
+    if (none) cnt.push(`<span class="cnt flat">— ${none} sin zonas</span>`);
     const withTp = e => e.changed || e.st === 'igual';
     const nTP = entries.filter(e => withTp(e) && e.tp === 'escrito').length, nPr = entries.filter(e => withTp(e) && e.tp === 'propuesta').length;
     h += `<section id="resumen"><div class="sec-h"><span class="acto">Resumen</span><h2>Tus umbrales en una pantalla</h2></div>` +
       `<div class="counts">${cnt.join('')}</div><div class="tiles">${entries.map(tile).join('')}</div>` +
       `<div class="athlete-note" style="margin-top:14px">Tus zonas son el mapa de tus entrenos. ${ups ? 'Donde subiste, el mapa se estira hacia arriba. ' : ''}Toca una tarjeta para ver sus zonas.</div>` +
-      `<div class="coach-note"><span class="tag">Entrenador · resumen</span><span class="mono">Ventana mean-max: <b>${esc(WIN.txt)}</b>. Umbral = media del mejor 20′ crudo (MM20); zonas = fronteras del esquema × k, k = nuevo / anterior.<br>` +
-      `Métricas: ${entries.length} · suben ${ups} · bajan ${downs} · nuevas ${news} · iguales/sin dato ${same} · artefactos ${art} · escritas en TP ${nTP} · propuestas ${nPr}.</span></div></section>`;
+      `<div class="coach-note"><span class="tag">Entrenador · resumen</span><span class="mono">Ventana mean-max: <b>${esc(WIN.txt)}</b>. Umbral = media del mejor 20′ crudo (MM20). Set vigente = new cuando existe; prev = antes.<br>` +
+      `Métricas: ${entries.length} · suben ${ups} · bajan ${downs} · nuevas ${news} · propuestas sin cambio de umbral ${props} · iguales/sin dato ${same} · en revisión ${revs} · artefactos ${art} · sin zonas ${none} · escritas en TP ${nTP} · propuestas ${nPr}.</span></div></section>`;
   } else {
     h += '<div class="callout"><h4>Este enlace no trae zonas para mostrar.</h4></div>';
   }
 
   sports.forEach(s => {
     const es = entries.filter(e => e.sport === s), S = D.d[s];
-    const anyCh = es.some(e => e.changed && e.prev && e.next);
     const curve = curveCard(s, S, es);
     if (!es.length && !curve) return;
+    const lede = es.some(e => e.showA) ? 'Antes en gris, ahora en color. Toca una zona para ver su rango.' :
+      es.some(e => e.main) ? 'Tus zonas vigentes. Toca una zona para ver su rango.' : 'Sin zonas para este deporte por ahora.';
     h += `<section id="s-${s}"><div class="sec-h"><span class="acto">${SP[s].acto}</span><h2>Tus zonas de ${SP[s].de}</h2></div>` +
-      `<p class="lede">${anyCh ? 'Antes en gris, ahora en color. Toca una zona para ver su rango.' : 'Tus zonas vigentes. Toca una zona para ver su rango.'}</p>` +
+      `<p class="lede">${lede}</p>` +
       `<div class="grid g2">${es.map((e, i) => metricCard(e, es.length % 2 === 1 && i === es.length - 1)).join('')}${curve}</div></section>`;
   });
   if (D.coz && typeof D.coz === 'object') h += cozSection(D.coz);
@@ -1132,38 +1238,46 @@ function render(D) {
 function mountRibbon(p) {
   const e = p.e, host = document.getElementById('v-' + e.id), leg = document.getElementById('l-' + e.id), out = document.getElementById('o-' + e.id);
   if (!host) return;
-  const main = p.main, tMain = p.tMain, n = main.length;
-  let sel = 0; main.forEach((z, i) => { if (tMain > 0 && z[0] <= tMain) sel = i; });
-  const labB = p.labB;
-  const R = Ribbon(host, { sport: e.sport, met: e.met, A: p.both ? e.prev : null, B: main, tA: p.both ? e.tP : NaN, tB: tMain, names: p.names, labA: 'ANTES', labB, sel,
-    aria: `Zonas de ${MT[e.met].name.toLowerCase()} de ${SP[e.sport].de}` + (p.both ? `: antes umbral ${fvs(e.sport, e.met, e.tP)}, ahora ${fvs(e.sport, e.met, e.tN)}` : '') });
-  const colors = ramp(e.sport, n);
-  leg.innerHTML = p.names.map((nm, i) => `<button type="button" data-i="${i}" aria-label="Zona ${esc(nm)}"><i style="background:${colors[i].c}"></i>${esc(nm)}</button>`).join('');
-  const readout = i => {
-    const z = main[i], pz = p.both ? e.prev[i] : null, pace = isPace(e.sport, e.met);
-    const nw = t => `<span class="nw">${esc(t)}</span>`;
-    let s = `<b>${esc(p.names[i])}</b> · `;
-    if (p.both) s += `${labB === 'PROPUESTA' ? 'propuesta' : 'ahora'} <b>${nw(zr(e.sport, e.met, z, i, n, tMain))}</b>` + (pz ? ` · antes ${nw(zr(e.sport, e.met, pz, i, e.prev.length, e.tP))}` : '');
-    else s += `<b>${nw(zr(e.sport, e.met, z, i, n, tMain))}</b>`;
-    s += `<span class="coach-only"> · ${nw(zpct(e.met, z, i, n, tMain))} del umbral${e.met === 'sp' ? ' · ' + nw(zms(e.met, z, i, n, tMain)) : ''}</span>`;
-    return s;
+  const B = e.main, A = e.showA ? e.prev : null, paired = !!(A && e.paired);
+  const namesB = zoneNames(B.length, e.scheme), namesA = A ? zoneNames(A.length, e.scheme) : [];
+  const word = p.labB === 'PROPUESTA' ? 'propuesta' : p.labB === 'NUEVAS' ? 'nuevas' : p.labB === 'AHORA' ? 'ahora' : '';
+  let i0 = 0; B.forEach((z, i) => { if (e.tV > 0 && z[0] <= e.tV) i0 = i; });
+  const R = Ribbon(host, { sport: e.sport, met: e.met, A, B, tA: A ? e.tP : NaN, tB: e.tV, namesA, namesB, labA: 'ANTES', labB: p.labB, paired, sel: { bar: 'b', i: i0 },
+    aria: `Zonas de ${MT[e.met].name.toLowerCase()} de ${SP[e.sport].de}` + (A ? `: antes umbral ${fvs(e.sport, e.met, e.tP)}, ${word || 'ahora'} ${fvs(e.sport, e.met, e.tV)}` : '') });
+  const cB = ramp(e.sport, B.length), cA = A ? ramp('old', A.length) : null;
+  const chip = (bar, nm, i, c) => `<button type="button" data-bar="${bar}" data-i="${i}" aria-label="${bar === 'a' ? 'Antes, zona' : 'Zona'} ${esc(nm)}"><i style="background:${c}"></i>${esc(nm)}</button>`;
+  leg.innerHTML = A && !paired ?
+    `<div class="zrow"><span class="zl">Antes</span>${namesA.map((nm, i) => chip('a', nm, i, cA[i].c)).join('')}</div>` +
+    `<div class="zrow"><span class="zl">${esc(word || 'ahora')}</span>${namesB.map((nm, i) => chip('b', nm, i, cB[i].c)).join('')}</div>` :
+    namesB.map((nm, i) => chip('b', nm, i, cB[i].c)).join('');
+  const nw = t => `<span class="nw">${esc(t)}</span>`;
+  const coachPct = (z, i, n, t) => `<span class="coach-only"> · ${nw(zpct(e.met, z, i, n, t))} del umbral${e.met === 'sp' ? ' · ' + nw(zms(e.met, z, i, n, t)) : ''}</span>`;
+  const readout = s => {
+    if (paired) {
+      const z = B[s.i], pz = A[s.i];
+      return `<b>${esc(namesB[s.i])}</b> · ${word || 'ahora'} <b>${nw(zr(e.sport, e.met, z, s.i, B.length, e.tV))}</b> · antes ${nw(zr(e.sport, e.met, pz, s.i, A.length, e.tP))}` + coachPct(z, s.i, B.length, e.tV);
+    }
+    if (A && s.bar === 'a') return `<b>antes ${esc(namesA[s.i])}</b> · ${nw(zr(e.sport, e.met, A[s.i], s.i, A.length, e.tP))}` + coachPct(A[s.i], s.i, A.length, e.tP);
+    if (A) return `<b>${esc(word || 'ahora')} ${esc(namesB[s.i])}</b> · ${nw(zr(e.sport, e.met, B[s.i], s.i, B.length, e.tV))}` + coachPct(B[s.i], s.i, B.length, e.tV);
+    return `<b>${esc(namesB[s.i])}</b> · <b>${nw(zr(e.sport, e.met, B[s.i], s.i, B.length, e.tV))}</b>` + coachPct(B[s.i], s.i, B.length, e.tV);
   };
-  const sync = i => { [...leg.children].forEach((b, j) => { b.classList.toggle('on', j === i); b.setAttribute('aria-pressed', j === i ? 'true' : 'false'); }); out.innerHTML = readout(i); };
+  const onChip = (b, s) => (A && !paired) ? (b.dataset.bar === s.bar && +b.dataset.i === s.i) : +b.dataset.i === s.i;
+  const sync = s => { leg.querySelectorAll('button').forEach(b => { const on = onChip(b, s); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); out.innerHTML = readout(s); };
+  const fromChip = b => ({ bar: A && !paired ? b.dataset.bar : 'b', i: +b.dataset.i });
   R.onSel = sync;
-  leg.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; const i = +b.dataset.i; R.sel = i; R.draw(); sync(i); });
-  leg.addEventListener('focusin', ev => { const b = ev.target.closest('button'); if (!b) return; const i = +b.dataset.i; if (i !== R.sel) { R.sel = i; R.draw(); sync(i); } });
-  R.draw(); sync(sel);
+  leg.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; const s = fromChip(b); R.sel = s; R.draw(); sync(s); });
+  leg.addEventListener('focusin', ev => { const b = ev.target.closest('button'); if (!b) return; const s = fromChip(b); if (s.bar !== R.sel.bar || s.i !== R.sel.i) { R.sel = s; R.draw(); sync(s); } });
+  R.draw(); sync(R.sel);
 }
 
 function mountCurve(p) {
   const host = document.getElementById('v-' + p.id), out = document.getElementById('o-' + p.id); if (!host) return;
-  const e = p.e;
-  const C = Curve(host, { sport: p.sport, met: p.met, pts: p.pts, st: e ? e.st : '', tN: e ? e.tN : NaN, tP: e ? e.tP : NaN, showNew: p.showNew,
+  const C = Curve(host, { sport: p.sport, met: p.met, pts: p.pts, e: p.e, showNew: p.showNew,
     aria: `Curva de rendimiento de ${SP[p.sport].de}, ${MT[p.met].name.toLowerCase()}, ${p.pts.length} duraciones` });
   const readout = i => {
     const q = p.pts[i], v = fv(p.sport, p.met, q[1]);
     return `<b>${esc(v.v)} ${esc(v.u)}</b> · mejor marca en ${esc(durLab(q[0]))} · ${esc(fdate(q[2]))}` +
-      `<span class="coach-only"> · t = ${esc(nf(q[0]))} s${p.met === 'sp' ? ' · v = ' + esc(nf(q[1], 2)) + ' m/s' : ''}</span>`;
+      `<span class="coach-only"> · t = ${esc(nf(q[0]))} s${p.met === 'sp' ? ' · v = ' + esc(nf(q[1], 4)) + ' m/s' : ''}</span>`;
   };
   C.onSel = i => { out.innerHTML = readout(i); };
   C.block = host.closest('.cblk');
